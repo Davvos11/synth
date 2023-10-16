@@ -1,3 +1,6 @@
+use nih_plug::nih_export_standalone;
+use synth::Synth;
+
 fn main() {
-    println!("Hello, world!");
+    nih_export_standalone::<Synth>();
 }
