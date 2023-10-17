@@ -10,7 +10,7 @@ pub struct Sine {
 impl Sine {
     pub fn new(frequency: f32, velocity: f32, sample_rate: f32) -> Self {
         Self {
-            gain_factor: 1.0,
+            gain_factor: velocity,
             frequency,
             phase: 0.0,
             sample_rate,
