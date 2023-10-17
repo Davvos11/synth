@@ -1,9 +1,8 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
 use crate::fixed_map::FixedMap;
-use crate::note::Sine;
+use crate::note::{Adsr, Note, Sine};
 
 mod gui;
 mod note;
@@ -12,7 +11,8 @@ mod fixed_map;
 pub struct Synth {
     params: Arc<SynthParams>,
     sample_rate: f32,
-    notes: FixedMap<u8, Sine>,
+    notes: FixedMap<u8, Note>,
+    released_notes: Vec<Note>,
 }
 
 impl Default for Synth {
@@ -21,6 +21,7 @@ impl Default for Synth {
             params: Arc::new(SynthParams::default()),
             sample_rate: 1.0,
             notes: FixedMap::new(64),
+            released_notes: Vec::with_capacity(64),
         }
     }
 }
@@ -32,8 +33,8 @@ struct SynthParams {
     #[persist = "editor-state"]
     editor_state: Arc<ViziaState>,
 
-    #[id = "gain"]
-    pub gain: FloatParam,
+    #[id = "volume"]
+    pub volume: FloatParam,
 }
 
 impl Default for SynthParams {
@@ -41,7 +42,7 @@ impl Default for SynthParams {
         Self {
             editor_state: gui::default_state(),
 
-            gain: FloatParam::new(
+            volume: FloatParam::new(
                 "Gain",
                 -10.0,
                 FloatRange::Linear {
@@ -87,26 +88,26 @@ impl Plugin for Synth {
         self.params.clone()
     }
 
-    fn editor(&mut self, async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         gui::create(
             self.params.clone(),
             self.params.editor_state.clone(),
         )
     }
 
-    fn initialize(&mut self, audio_io_layout: &AudioIOLayout, buffer_config: &BufferConfig, context: &mut impl InitContext<Self>) -> bool {
+    fn initialize(&mut self, _audio_io_layout: &AudioIOLayout, buffer_config: &BufferConfig, _context: &mut impl InitContext<Self>) -> bool {
         self.sample_rate = buffer_config.sample_rate;
 
         true
     }
 
-    fn process(&mut self, buffer: &mut Buffer, aux: &mut AuxiliaryBuffers, context: &mut impl ProcessContext<Self>) -> ProcessStatus {
+    fn process(&mut self, buffer: &mut Buffer, _aux: &mut AuxiliaryBuffers, context: &mut impl ProcessContext<Self>) -> ProcessStatus {
         // Get midi event
         let mut next_event = context.next_event();
 
         for (sample_id, channel_samples) in buffer.iter_samples().enumerate() {
             // Get gain value
-            let gain = self.params.gain.smoothed.next();
+            let volume = self.params.volume.smoothed.next();
 
             // Loop over midi events
             while let Some(event) = next_event {
@@ -118,15 +119,25 @@ impl Plugin for Synth {
                 match event {
                     NoteEvent::NoteOn { note, velocity, .. } => {
                         // Create new sine wave for this note
-                        let wave = Sine::new(
-                            util::midi_note_to_freq(note),
-                            velocity,
-                            self.sample_rate);
-                        self.notes.insert(note, wave);
-                        // TODO, stop playing the old value
+                        let new_note = Note::new(
+                            Sine::new(
+                                util::midi_note_to_freq(note),
+                                velocity,
+                                self.sample_rate),
+                            Adsr::new(0.2, 0.1, 0.9, 0.4)
+                        );
+                        // Add new note to map
+                        let old_note = self.notes.insert(note, new_note);
+                        // If a note was already playing, release it and save to the list
+                        if let Some(old_note) = old_note {
+                            self.release_note(old_note);
+                        }
                     }
                     NoteEvent::NoteOff { note, .. } => {
-                        self.notes.remove(&note);
+                        let note = self.notes.remove(&note);
+                        if let Some(note) = note {
+                            self.release_note(note);
+                        }
                     }
                     // NoteEvent::PolyPressure { note, pressure, .. }  =>
                     //     {
@@ -139,17 +150,30 @@ impl Plugin for Synth {
             }
 
             // Calculate output value, by summing all waves
-            let new_sample: f32 = self.notes.map.values_mut()
-                .map(|e| e.get_sample())
-                .sum();
-            let new_sample = new_sample * util::db_to_gain_fast(gain);
+            let mut new_sample = self.notes.map.values_mut()
+                .map(|n| n.get_sample()).sum();
+            new_sample += self.released_notes.iter_mut()
+                .map(|n| n.get_sample()).sum::<f32>();
+
+            // Apply volume
+            new_sample *= util::db_to_gain_fast(volume);
 
             for sample in channel_samples {
                 *sample = new_sample;
             }
+
+            // Remove finished notes
+            self.released_notes.retain(|n| !n.finished());
         }
 
         ProcessStatus::KeepAlive
+    }
+}
+
+impl Synth {
+    fn release_note(&mut self, mut note: Note) {
+        note.release();
+        self.released_notes.push(note);
     }
 }
 

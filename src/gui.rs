@@ -45,8 +45,8 @@ pub(crate) fn create(
                     .child_top(Stretch(1.0))
                     .child_bottom(Pixels(0.0));
 
-                Label::new(cx, "Gain");
-                ParamSlider::new(cx, Data::params, |params| &params.gain);
+                Label::new(cx, "Volume");
+                ParamSlider::new(cx, Data::params, |params| &params.volume);
 
             }).row_between(Pixels(0.0))
                 .child_left(Stretch(1.0))
