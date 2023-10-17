@@ -7,6 +7,9 @@ description = "A simple synth"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = ["xtask"]
+
 [lib]
 # The `lib` artifact is needed for the standalone target
 crate-type = ["cdylib", "lib"]

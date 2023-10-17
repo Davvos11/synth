@@ -142,3 +142,14 @@ impl Plugin for Synth {
         ProcessStatus::KeepAlive
     }
 }
+
+impl Vst3Plugin for Synth {
+    const VST3_CLASS_ID: [u8; 16] = *b"SineMoistestPlug";
+    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] = &[
+        Vst3SubCategory::Instrument,
+        Vst3SubCategory::Synth,
+        Vst3SubCategory::Tools,
+    ];
+}
+
+nih_export_vst3!(Synth);
