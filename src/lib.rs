@@ -66,7 +66,7 @@ impl Default for SynthParams {
                 "Attack",
                 0.01,
                 FloatRange::Linear {
-                    min: 0.0,
+                    min: 0.01,
                     max: 10.0,
                 }
             ).with_smoother(SmoothingStyle::Linear(3.0))
@@ -77,7 +77,7 @@ impl Default for SynthParams {
                 "Decay",
                 0.2,
                 FloatRange::Linear {
-                    min: 0.0,
+                    min: 0.01,
                     max: 10.0,
                 }
             ).with_smoother(SmoothingStyle::Linear(3.0))
@@ -99,7 +99,7 @@ impl Default for SynthParams {
                 "Release",
                 0.2,
                 FloatRange::Linear {
-                    min: 0.0,
+                    min: 0.01,
                     max: 10.0,
                 }
             ).with_smoother(SmoothingStyle::Linear(3.0))

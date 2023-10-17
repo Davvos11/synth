@@ -6,7 +6,7 @@ Mainly created to learn about writing Synthesizers.
 ## Features
 - [x] Sine wave generation
 - [x] Polyphonic midi input
-- [ ] ADSR
+- [x] ADSR
 - [ ] Visualisation
 - [ ] Other oscillator waves
 - [ ] Oscillator parameters
