@@ -2,15 +2,17 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
+use crate::fixed_map::FixedMap;
 use crate::note::Sine;
 
 mod gui;
 mod note;
+mod fixed_map;
 
 pub struct Synth {
     params: Arc<SynthParams>,
     sample_rate: f32,
-    notes: HashMap<u8, Sine>,
+    notes: FixedMap<u8, Sine>,
 }
 
 impl Default for Synth {
@@ -18,10 +20,7 @@ impl Default for Synth {
         Self {
             params: Arc::new(SynthParams::default()),
             sample_rate: 1.0,
-            // We have to add a max capacity because relocating objects is not
-            // supported in nih_plug.
-            // TODO add check for when this capacity is reached
-            notes: HashMap::with_capacity(64),
+            notes: FixedMap::new(64),
         }
     }
 }
@@ -140,7 +139,7 @@ impl Plugin for Synth {
             }
 
             // Calculate output value, by summing all waves
-            let new_sample: f32 = self.notes.values_mut()
+            let new_sample: f32 = self.notes.map.values_mut()
                 .map(|e| e.get_sample())
                 .sum();
             let new_sample = new_sample * util::db_to_gain_fast(gain);

@@ -2411,6 +2411,7 @@ dependencies = [
 name = "synth"
 version = "0.1.0"
 dependencies = [
+ "indexmap",
  "nih_plug",
  "nih_plug_vizia",
 ]
