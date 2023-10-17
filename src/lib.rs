@@ -1,14 +1,16 @@
-use std::f32::consts;
+use std::collections::HashMap;
 use std::sync::Arc;
 use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
+use crate::note::Sine;
 
 mod gui;
+mod note;
 
 pub struct Synth {
     params: Arc<SynthParams>,
     sample_rate: f32,
-    phase: f32,
+    notes: HashMap<u8, Sine>,
 }
 
 impl Default for Synth {
@@ -16,7 +18,10 @@ impl Default for Synth {
         Self {
             params: Arc::new(SynthParams::default()),
             sample_rate: 1.0,
-            phase: 0.0,
+            // We have to add a max capacity because relocating objects is not
+            // supported in nih_plug.
+            // TODO add check for when this capacity is reached
+            notes: HashMap::with_capacity(64),
         }
     }
 }
@@ -30,9 +35,6 @@ struct SynthParams {
 
     #[id = "gain"]
     pub gain: FloatParam,
-
-    #[id = "freq"]
-    pub frequency: FloatParam,
 }
 
 impl Default for SynthParams {
@@ -50,35 +52,7 @@ impl Default for SynthParams {
             ).with_smoother(SmoothingStyle::Linear(3.0))
                 .with_step_size(0.01)
                 .with_unit(" dB"),
-            frequency: FloatParam::new(
-                "Frequency",
-                420.0,
-                FloatRange::Skewed {
-                    min: 20.0,
-                    max: 20_000.0,
-                    factor: FloatRange::skew_factor(-2.0),
-                },
-            ).with_smoother(SmoothingStyle::Linear(10.0))
-                .with_value_to_string(formatters::v2s_f32_hz_then_khz(0))
-                .with_string_to_value(formatters::s2v_f32_hz_then_khz()),
         }
-    }
-}
-
-impl Synth {
-    fn calculate_sine(&mut self, frequency: f32) -> f32 {
-        // Calculate the next step of the sine and phase
-        let phase_delta = frequency / self.sample_rate;
-        let sine = (self.phase * consts::TAU).sin();
-
-        // Update the phase (wrap around if needed)
-        self.phase += phase_delta;
-        if self.phase >= 1.0 {
-            self.phase -= 1.0;
-        }
-
-        // Return the sine value
-        sine
     }
 }
 
@@ -103,6 +77,8 @@ impl Plugin for Synth {
         },
     ];
 
+    const MIDI_INPUT: MidiConfig = MidiConfig::Basic;
+
     const SAMPLE_ACCURATE_AUTOMATION: bool = true;
 
     type SysExMessage = ();
@@ -126,16 +102,51 @@ impl Plugin for Synth {
     }
 
     fn process(&mut self, buffer: &mut Buffer, aux: &mut AuxiliaryBuffers, context: &mut impl ProcessContext<Self>) -> ProcessStatus {
-        for (sample_id, channel_samples) in buffer.iter_samples().enumerate() {
-            // Get gain and frequency (smoothed values)
-            let gain = self.params.gain.smoothed.next();
-            let frequency = self.params.frequency.smoothed.next();
-            // Calculate output value
-            let sine = self.calculate_sine(frequency);
+        // Get midi event
+        let mut next_event = context.next_event();
 
-            // Set samples
+        for (sample_id, channel_samples) in buffer.iter_samples().enumerate() {
+            // Get gain value
+            let gain = self.params.gain.smoothed.next();
+
+            // Loop over midi events
+            while let Some(event) = next_event {
+                // Break if we encounter midi events for the next sample buffer
+                if event.timing() > sample_id as u32 {
+                    break;
+                }
+
+                match event {
+                    NoteEvent::NoteOn { note, velocity, .. } => {
+                        // Create new sine wave for this note
+                        let wave = Sine::new(
+                            util::midi_note_to_freq(note),
+                            velocity,
+                            self.sample_rate);
+                        self.notes.insert(note, wave);
+                        // TODO, stop playing the old value
+                    }
+                    NoteEvent::NoteOff { note, .. } => {
+                        self.notes.remove(&note);
+                    }
+                    // NoteEvent::PolyPressure { note, pressure, .. }  =>
+                    //     {
+                    //         ()
+                    //     }
+                    _ => (),
+                }
+
+                next_event = context.next_event();
+            }
+
+            // Calculate output value, by summing all waves
+            let new_sample: f32 = self.notes.values_mut()
+                .map(|e| e.get_sample())
+                .sum();
+            let new_sample = new_sample * util::db_to_gain_fast(gain);
+
             for sample in channel_samples {
-                *sample = sine * util::db_to_gain_fast(gain);
+                *sample = new_sample;
             }
         }
 
