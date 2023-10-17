@@ -3,6 +3,17 @@
 A (currently) simple VST3 Synthesizer, written in Rust.
 Mainly created to learn about writing Synthesizers.
 
+## Features
+- [x] Sine wave generation
+- [x] Polyphonic midi input
+- [ ] ADSR
+- [ ] Visualisation
+- [ ] Other oscillator waves
+- [ ] Oscillator parameters
+- [ ] Multiple oscillators
+- [ ] Filters
+- [ ] Modulation
+
 ## Run
 Run standalone using:
 ```bash
