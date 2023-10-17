@@ -15,7 +15,7 @@ struct Data {
 impl Model for Data {}
 
 pub(crate) fn default_state() -> Arc<ViziaState> {
-    ViziaState::new(|| (200, 250))
+    ViziaState::new(|| (200, 350))
 }
 
 pub(crate) fn create(
@@ -36,17 +36,29 @@ pub(crate) fn create(
             ResizeHandle::new(cx);
 
             VStack::new(cx, |cx| {
-                Label::new(cx, "Zwiebers\n brakke synth")
+                Label::new(cx, "ZwieberSynth")
                     .font_family(vec![FamilyOwned::Name(String::from(
                         assets::NOTO_SANS_THIN,
                     ))])
                     .font_size(30.0)
-                    .height(Pixels(50.0))
+                    .height(Pixels(25.0))
                     .child_top(Stretch(1.0))
                     .child_bottom(Pixels(0.0));
 
                 Label::new(cx, "Volume");
                 ParamSlider::new(cx, Data::params, |params| &params.volume);
+
+                Label::new(cx, "Attack");
+                ParamSlider::new(cx, Data::params, |params| &params.attack);
+
+                Label::new(cx, "Decay");
+                ParamSlider::new(cx, Data::params, |params| &params.decay);
+
+                Label::new(cx, "Sustain");
+                ParamSlider::new(cx, Data::params, |params| &params.sustain);
+
+                Label::new(cx, "Release");
+                ParamSlider::new(cx, Data::params, |params| &params.release);
 
             }).row_between(Pixels(0.0))
                 .child_left(Stretch(1.0))

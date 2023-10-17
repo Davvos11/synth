@@ -35,6 +35,15 @@ struct SynthParams {
 
     #[id = "volume"]
     pub volume: FloatParam,
+
+    #[id = "attack"]
+    pub attack: FloatParam,
+    #[id = "decay"]
+    pub decay: FloatParam,
+    #[id = "sustain"]
+    pub sustain: FloatParam,
+    #[id = "release"]
+    pub release: FloatParam,
 }
 
 impl Default for SynthParams {
@@ -43,7 +52,7 @@ impl Default for SynthParams {
             editor_state: gui::default_state(),
 
             volume: FloatParam::new(
-                "Gain",
+                "Volume",
                 -10.0,
                 FloatRange::Linear {
                     min: -30.0,
@@ -52,6 +61,50 @@ impl Default for SynthParams {
             ).with_smoother(SmoothingStyle::Linear(3.0))
                 .with_step_size(0.01)
                 .with_unit(" dB"),
+
+            attack: FloatParam::new(
+                "Attack",
+                0.01,
+                FloatRange::Linear {
+                    min: 0.0,
+                    max: 10.0,
+                }
+            ).with_smoother(SmoothingStyle::Linear(3.0))
+                .with_step_size(0.01)
+                .with_unit("sec"),
+
+            decay: FloatParam::new(
+                "Decay",
+                0.2,
+                FloatRange::Linear {
+                    min: 0.0,
+                    max: 10.0,
+                }
+            ).with_smoother(SmoothingStyle::Linear(3.0))
+                .with_step_size(0.01)
+                .with_unit("sec"),
+
+            sustain: FloatParam::new(
+                "Sustain",
+                -10.0,
+                FloatRange::Linear {
+                    min: -30.0,
+                    max: 0.0,
+                }
+            ).with_smoother(SmoothingStyle::Linear(3.0))
+                .with_step_size(0.01)
+                .with_unit("dB"),
+
+            release: FloatParam::new(
+                "Release",
+                0.2,
+                FloatRange::Linear {
+                    min: 0.0,
+                    max: 10.0,
+                }
+            ).with_smoother(SmoothingStyle::Linear(3.0))
+                .with_step_size(0.01)
+                .with_unit("sec"),
         }
     }
 }
@@ -106,8 +159,9 @@ impl Plugin for Synth {
         let mut next_event = context.next_event();
 
         for (sample_id, channel_samples) in buffer.iter_samples().enumerate() {
-            // Get gain value
+            // Get ui parameters
             let volume = self.params.volume.smoothed.next();
+            let adsr = self.get_adsr();
 
             // Loop over midi events
             while let Some(event) = next_event {
@@ -124,7 +178,7 @@ impl Plugin for Synth {
                                 util::midi_note_to_freq(note),
                                 velocity,
                                 self.sample_rate),
-                            Adsr::new(0.2, 0.1, 0.9, 0.4)
+                            adsr,
                         );
                         // Add new note to map
                         let old_note = self.notes.insert(note, new_note);
@@ -174,6 +228,15 @@ impl Synth {
     fn release_note(&mut self, mut note: Note) {
         note.release();
         self.released_notes.push(note);
+    }
+
+    fn get_adsr(&self) -> Adsr {
+        Adsr::new(
+            self.params.attack.smoothed.next(),
+            self.params.decay.smoothed.next(),
+            util::db_to_gain_fast(self.params.sustain.smoothed.next()),
+            self.params.release.smoothed.next(),
+        )
     }
 }
 
