@@ -8,30 +8,21 @@ use crate::gui::visualiser::scope::Scope;
 mod scope;
 
 pub fn visualiser(cx: &mut Context)
-    -> Handle<VStack> {
-    // TODO can this be shorter / clearer / less complicated?
-    let gain = GuiData::visual_data.map(
-        |data| {
-            let mut visual_data = data.lock().unwrap();
-            let visual_data = visual_data.read();
-            util::gain_to_db_fast(visual_data.peak_meter)
-        });
-
-    let samples = GuiData::visual_data.map(
-        |data| {
-            let mut visual_data = data.lock().unwrap();
-            let visual_data = visual_data.read();
-            visual_data.samples.clone()
-        });
+                  -> Handle<VStack> {
+    let visual_data_lens = GuiData::visual_data.map(
+        |data| data.lock().unwrap().read().clone()
+    );
 
 
     VStack::new(cx, |cx| {
         PeakMeter::new(
             cx,
-            gain,
+            visual_data_lens.clone().map(
+                |d| util::gain_to_db_fast(d.peak_meter)
+            ),
             Some(Duration::from_millis(600)),
         );
 
-        Scope::new(cx, samples);
+        Scope::new(cx, visual_data_lens);
     }).row_between(Pixels(15.0))
 }

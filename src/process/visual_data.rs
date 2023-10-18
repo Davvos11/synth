@@ -17,6 +17,7 @@ impl SynthData {
     }
 }
 
+#[derive(Clone)]
 pub struct VisualData {
     pub peak_meter: f32,
     pub samples: Vec<f32>,

@@ -1,26 +1,27 @@
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::vizia::vg;
 use nih_plug_vizia::vizia::vg::Paint;
+use crate::process::visual_data::VisualData;
 
 pub struct Scope<L>
-    where L: Lens<Target=Vec<f32>>
+    where L: Lens<Target=VisualData>
 {
-    samples: L,
+    visual_data: L,
 }
 
 impl<L> Scope<L>
-    where L: Lens<Target=Vec<f32>>
+    where L: Lens<Target=VisualData>
 {
-    pub fn new(cx: &mut Context, samples: L) -> Handle<Self>
+    pub fn new(cx: &mut Context, visual_data: L) -> Handle<Self>
     {
         Self {
-            samples
+            visual_data
         }.build(cx, |_| {})
     }
 }
 
 impl<L> View for Scope<L>
-    where L: Lens<Target=Vec<f32>>
+    where L: Lens<Target=VisualData>
 {
     fn element(&self) -> Option<&'static str> {
         Some("Scope")
@@ -37,7 +38,7 @@ impl<L> View for Scope<L>
         canvas.stroke_path(&mut outline, &vg::Paint::color(Color::black().into()));
 
         // Draw the waveform
-        let mut samples = self.samples.get(cx);
+        let mut samples = self.visual_data.get(cx).samples;
 
         let mut wave = vg::Path::new();
         let baseline = bounds.y + bounds.h / 2.0;
