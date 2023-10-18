@@ -1,12 +1,12 @@
 use std::sync::Arc;
 use nih_plug::editor::Editor;
-use nih_plug::prelude::AtomicF32;
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::{ResizeHandle};
 use crate::gui::controls::controls;
 use crate::gui::visualiser::visualiser;
 use crate::SynthParams;
+use crate::process::visual_data::VisualData;
 
 mod controls;
 mod visualiser;
@@ -14,7 +14,7 @@ mod visualiser;
 #[derive(Lens)]
 struct Data {
     params: Arc<SynthParams>,
-    peak_meter: Arc<AtomicF32>,
+    data: Arc<VisualData>,
 }
 
 impl Model for Data {}
@@ -26,7 +26,7 @@ pub(crate) fn default_state() -> Arc<ViziaState> {
 pub(crate) fn create(
     params: Arc<SynthParams>,
     editor_state: Arc<ViziaState>,
-    peak_meter: Arc<AtomicF32>,
+    data: Arc<VisualData>,
 ) -> Option<Box<dyn Editor>> {
     create_vizia_editor(
         editor_state,
@@ -37,7 +37,7 @@ pub(crate) fn create(
 
             Data {
                 params: params.clone(),
-                peak_meter: peak_meter.clone(),
+                data: data.clone(),
             }.build(cx);
 
             ResizeHandle::new(cx);
