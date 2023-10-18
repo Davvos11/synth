@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use nih_plug::editor::Editor;
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
@@ -12,12 +12,12 @@ mod controls;
 mod visualiser;
 
 #[derive(Lens)]
-struct Data {
+pub struct GuiData {
     params: Arc<SynthParams>,
-    data: Arc<VisualData>,
+    visual_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
 }
 
-impl Model for Data {}
+impl Model for GuiData {}
 
 pub(crate) fn default_state() -> Arc<ViziaState> {
     ViziaState::new(|| (500, 350))
@@ -26,7 +26,7 @@ pub(crate) fn default_state() -> Arc<ViziaState> {
 pub(crate) fn create(
     params: Arc<SynthParams>,
     editor_state: Arc<ViziaState>,
-    data: Arc<VisualData>,
+    visual_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
 ) -> Option<Box<dyn Editor>> {
     create_vizia_editor(
         editor_state,
@@ -35,9 +35,9 @@ pub(crate) fn create(
             assets::register_noto_sans_light(cx);
             assets::register_noto_sans_thin(cx);
 
-            Data {
+            GuiData {
                 params: params.clone(),
-                data: data.clone(),
+                visual_data: visual_data.clone(),
             }.build(cx);
 
             ResizeHandle::new(cx);

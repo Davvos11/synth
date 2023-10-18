@@ -2414,6 +2414,7 @@ dependencies = [
  "indexmap",
  "nih_plug",
  "nih_plug_vizia",
+ "triple_buffer",
 ]
 
 [[package]]
@@ -2540,6 +2541,15 @@ dependencies = [
  "serde_spanned",
  "toml_datetime",
  "winnow",
+]
+
+[[package]]
+name = "triple_buffer"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88de9e10c067f441831d00cca341cf66fc69227ac6962292f944382dd61dacb9"
+dependencies = [
+ "cache-padded",
 ]
 
 [[package]]

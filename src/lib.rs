@@ -1,9 +1,10 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
+use triple_buffer::TripleBuffer;
 use crate::note::Adsr;
 use crate::params::SynthParams;
 use crate::process::notes::NoteStorage;
-use crate::process::visual_data::SynthData;
+use crate::process::visual_data::{SynthData, VisualData};
 
 mod gui;
 mod note;
@@ -19,15 +20,19 @@ pub struct Synth {
     sample_rate: f32,
     notes: NoteStorage,
     data: SynthData,
+    output_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
 }
 
 impl Default for Synth {
     fn default() -> Self {
+        let (synth_data_input, synth_data_output) = TripleBuffer::default().split();
+
         Self {
             params: Arc::new(SynthParams::default()),
             sample_rate: 1.0,
             notes: NoteStorage::new(),
-            data: SynthData::default(),
+            data: SynthData::new(synth_data_input),
+            output_data: Arc::new(Mutex::new(synth_data_output)),
         }
     }
 }
@@ -68,7 +73,7 @@ impl Plugin for Synth {
         gui::create(
             self.params.clone(),
             self.params.editor_state.clone(),
-            self.data.get_arc_clone(),
+            self.output_data.clone(),
         )
     }
 
@@ -85,7 +90,7 @@ impl Plugin for Synth {
     }
 
     fn process(&mut self, buffer: &mut Buffer, _aux: &mut AuxiliaryBuffers, context: &mut impl ProcessContext<Self>) -> ProcessStatus {
-        for (sample_id, channel_samples) in buffer.iter_samples().enumerate() {
+        for (_sample_id, channel_samples) in buffer.iter_samples().enumerate() {
             // Get ui parameters
             let volume = self.params.volume.smoothed.next();
             let adsr = self.get_adsr();
