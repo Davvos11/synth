@@ -2,9 +2,11 @@ use std::sync::Arc;
 use nih_plug::editor::Editor;
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::vizia::views::VStack;
-use nih_plug_vizia::widgets::{ParamSlider, ResizeHandle};
+use nih_plug_vizia::widgets::{ResizeHandle};
+use crate::gui::controls::controls;
 use crate::SynthParams;
+
+mod controls;
 
 #[derive(Lens)]
 struct Data {
@@ -15,7 +17,7 @@ struct Data {
 impl Model for Data {}
 
 pub(crate) fn default_state() -> Arc<ViziaState> {
-    ViziaState::new(|| (200, 350))
+    ViziaState::new(|| (500, 350))
 }
 
 pub(crate) fn create(
@@ -41,27 +43,13 @@ pub(crate) fn create(
                         assets::NOTO_SANS_THIN,
                     ))])
                     .font_size(30.0)
-                    .height(Pixels(25.0))
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Pixels(0.0));
+                    .height(Pixels(25.0));
 
-                Label::new(cx, "Volume");
-                ParamSlider::new(cx, Data::params, |params| &params.volume);
+                HStack::new(cx, |cx| {
+                    controls(cx);
 
-                Label::new(cx, "Attack");
-                ParamSlider::new(cx, Data::params, |params| &params.attack);
+                }).col_between(Pixels(20.0));
+            }).child_space(Stretch(1.0));
 
-                Label::new(cx, "Decay");
-                ParamSlider::new(cx, Data::params, |params| &params.decay);
-
-                Label::new(cx, "Sustain");
-                ParamSlider::new(cx, Data::params, |params| &params.sustain);
-
-                Label::new(cx, "Release");
-                ParamSlider::new(cx, Data::params, |params| &params.release);
-
-            }).row_between(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Stretch(1.0));
         })
 }
