@@ -26,7 +26,7 @@ impl Default for VisualData {
     fn default() -> Self {
         Self {
             peak_meter: util::MINUS_INFINITY_DB,
-            samples: Vec::with_capacity(64),
+            samples: Vec::with_capacity(1024),
         }
     }
 }
@@ -45,10 +45,10 @@ impl SynthData {
                 + amplitude * (1.0 - self.peak_meter_decay_weight)
         };
 
-        // if self.data.samples.len() < self.data.samples.capacity() {
-        //     let data = self.data.c
-        //     self.data.samples.push(new_sample);
-        // }
+        while data.samples.len() >= data.samples.capacity() {
+            data.samples.remove(0);
+        }
+        data.samples.push(new_sample);
 
         // Publish input buffer
         self.data.publish();
