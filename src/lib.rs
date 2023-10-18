@@ -8,11 +8,16 @@ mod gui;
 mod note;
 mod fixed_map;
 
+/// The time it takes for the peak meter to decay by 12 dB after switching to complete silence.
+const PEAK_METER_DECAY_MS: f64 = 150.0;
+
 pub struct Synth {
     params: Arc<SynthParams>,
     sample_rate: f32,
     notes: FixedMap<u8, Note>,
     released_notes: Vec<Note>,
+    peak_meter: Arc<AtomicF32>,
+    peak_meter_decay_weight: f32, // Depends on sample rate
 }
 
 impl Default for Synth {
@@ -22,6 +27,8 @@ impl Default for Synth {
             sample_rate: 1.0,
             notes: FixedMap::new(64),
             released_notes: Vec::with_capacity(64),
+            peak_meter: Arc::new(AtomicF32::from(util::MINUS_INFINITY_DB)),
+            peak_meter_decay_weight: 1.0,
         }
     }
 }
@@ -88,10 +95,10 @@ impl Default for SynthParams {
                 "Sustain",
                 -10.0,
                 FloatRange::Linear {
-                    min: -30.0,
+                    min: util::MINUS_INFINITY_DB,
                     max: 0.0,
                 }
-            ).with_smoother(SmoothingStyle::Linear(3.0))
+            ).with_smoother(SmoothingStyle::Logarithmic(3.0))
                 .with_step_size(0.01)
                 .with_unit("dB"),
 
@@ -145,11 +152,18 @@ impl Plugin for Synth {
         gui::create(
             self.params.clone(),
             self.params.editor_state.clone(),
+            self.peak_meter.clone(),
         )
     }
 
     fn initialize(&mut self, _audio_io_layout: &AudioIOLayout, buffer_config: &BufferConfig, _context: &mut impl InitContext<Self>) -> bool {
         self.sample_rate = buffer_config.sample_rate;
+
+        // After `PEAK_METER_DECAY_MS` milliseconds of pure silence, the peak meter's value should
+        // have dropped by 12 dB
+        self.peak_meter_decay_weight = 0.25f64
+            .powf((buffer_config.sample_rate as f64 * PEAK_METER_DECAY_MS / 1000.0).recip())
+            as f32;
 
         true
     }
@@ -218,9 +232,24 @@ impl Plugin for Synth {
 
             // Remove finished notes
             self.released_notes.retain(|n| !n.finished());
+
+            // Calculate volume meter
+            if self.params.editor_state.is_open() {
+                let amplitude = new_sample.abs();
+                let current_peak_meter = self.peak_meter.load(std::sync::atomic::Ordering::Relaxed);
+                let new_peak_meter = if amplitude > current_peak_meter {
+                    amplitude
+                } else {
+                    current_peak_meter * self.peak_meter_decay_weight
+                        + amplitude * (1.0 - self.peak_meter_decay_weight)
+                };
+
+                self.peak_meter
+                    .store(new_peak_meter, std::sync::atomic::Ordering::Relaxed)
+            }
         }
 
-        ProcessStatus::KeepAlive
+        ProcessStatus::Normal
     }
 }
 
