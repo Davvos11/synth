@@ -1,6 +1,6 @@
 use nih_plug::prelude::*;
 use crate::fixed_map::FixedMap;
-use crate::note::{Adsr, Note, Sine};
+use crate::note::{Adsr, Note, Wave, WaveKind};
 use crate::Synth;
 
 pub struct NoteStorage {
@@ -26,11 +26,12 @@ impl NoteStorage {
             NoteEvent::NoteOn { note, velocity, .. } => {
                 // Create new sine wave for this note
                 let new_note = Note::new(
-                    Sine::new(
-                        util::midi_note_to_freq(note),
-                        velocity,
-                        sample_rate),
+                    Wave::new(util::midi_note_to_freq(note),
+                              WaveKind::Square,
+                              sample_rate
+                    ),
                     adsr,
+                    velocity,
                 );
                 // Add new note to map
                 let old_note = self.notes.insert(note, new_note);

@@ -6,19 +6,21 @@ mod envelope;
 
 
 pub struct Note {
-    wave: Sine,
+    wave: Wave,
     envelope: Envelope,
     finished: bool,
+    velocity: f32,
 }
 
 impl Note {
-    pub fn new(wave: Sine, adsr: Adsr) -> Self {
+    pub fn new(wave: Wave, adsr: Adsr, velocity: f32) -> Self {
         let sample_rate = wave.sample_rate;
 
         Self {
             wave,
             envelope: Envelope::new(adsr, sample_rate),
             finished: false,
+            velocity,
         }
     }
 
@@ -27,49 +29,63 @@ impl Note {
         let wave = self.wave.get_sample();
         // Get envelope factor
         let (env, finished) = self.envelope.get_gain();
-        
+
         self.finished = finished;
-        wave * env
+        wave * env * self.velocity
     }
 
     pub fn release(&mut self) {
         self.envelope.release()
     }
-    
+
     pub fn finished(&self) -> bool {
         self.finished
     }
 }
 
-trait Wave {
-    fn get_sample(&mut self) -> f32;
-
-    fn sample_rate(&self) -> f32;
+pub enum WaveKind {
+    Sine,
+    Triangle,
+    Saw,
+    Square,
 }
 
-pub struct Sine {
+pub struct Wave {
     phase: f32,
-    gain_factor: f32,
     frequency: f32,
     sample_rate: f32,
+    kind: WaveKind,
 }
 
-impl Sine {
-    pub fn new(frequency: f32, velocity: f32, sample_rate: f32) -> Self {
+impl Wave {
+    pub fn new(frequency: f32, kind: WaveKind, sample_rate: f32) -> Self {
         Self {
-            gain_factor: velocity,
             frequency,
             phase: 0.0,
             sample_rate,
+            kind,
         }
     }
-}
 
-impl Sine {
     fn get_sample(&mut self) -> f32 {
-        // Calculate the next step of the sine and phase
+        // Calculate the next step of the wave and phase
         let phase_delta = self.frequency / self.sample_rate;
-        let sine = (self.phase * consts::TAU).sin();
+
+        let wave = match self.kind {
+            WaveKind::Sine => {
+                (self.phase * consts::TAU).sin()
+            }
+            WaveKind::Triangle => {
+                2.0 * (2.0 * (self.phase - (self.phase + 0.5).floor())).abs() - 1.0
+            }
+            WaveKind::Saw => {
+                2.0 * (self.phase - (self.phase + 0.5).floor())
+            }
+            WaveKind::Square => {
+                // TODO PWM by modifying 0.5
+                if self.phase < 0.5 { 1.0 } else { -1.0 }
+            }
+        };
 
         // Update the phase (wrap around if needed)
         self.phase += phase_delta;
@@ -78,6 +94,6 @@ impl Sine {
         }
 
         // Return the sine value
-        sine * self.gain_factor
+        wave
     }
 }
