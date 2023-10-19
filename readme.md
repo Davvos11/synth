@@ -7,7 +7,7 @@ Mainly created to learn about writing Synthesizers.
 - [x] Sine wave generation
 - [x] Polyphonic midi input
 - [x] ADSR
-- [ ] Visualisation
+- [x] Visualisation
 - [ ] Other oscillator waves
 - [ ] Oscillator parameters
 - [ ] Multiple oscillators

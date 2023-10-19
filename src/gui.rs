@@ -48,7 +48,8 @@ pub(crate) fn create(
                         assets::NOTO_SANS_THIN,
                     ))])
                     .font_size(30.0)
-                    .height(Pixels(25.0));
+                    .height(Pixels(25.0))
+                    .bottom(Pixels(20.0));
 
                 HStack::new(cx, |cx| {
                     controls(cx);
