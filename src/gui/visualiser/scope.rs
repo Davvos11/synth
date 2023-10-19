@@ -1,3 +1,4 @@
+use std::cmp::min;
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::vizia::vg;
 use nih_plug_vizia::vizia::vg::Paint;
@@ -38,17 +39,28 @@ impl<L> View for Scope<L>
         canvas.stroke_path(&mut outline, &vg::Paint::color(Color::black().into()));
 
         // Draw the waveform
-        let mut samples = self.visual_data.get(cx).samples;
+        let visual_data = self.visual_data.get(cx);
+        let mut samples = visual_data.samples;
 
         let mut wave = vg::Path::new();
         let baseline = bounds.y + bounds.h / 2.0;
         wave.move_to(bounds.x, baseline);
 
-        // Calculate chunk size
-        let chunk_size = (samples.len() as f32 / bounds.w) as usize;
-        // Ignore first samples so they fit in n / chunk_size chunks
-        let overflow = (samples.len() as f32 % bounds.w) as usize;
-        samples.drain(0..overflow);
+        let start_points = find_wave_starts(&samples);
+        // Crop to screen
+        // TODO cache crop size or base on note that is playing
+        samples = Vec::from(crop_to_screen(&samples, start_points, bounds.w, 2));
+
+        // Zoom out to screen
+        let chunk_size = if samples.len() as f32 > bounds.w {
+            let chunk_size = (samples.len() as f32 / bounds.w) as usize;
+            // Ignore first samples so they fit in n / chunk_size chunks
+            let overflow = (samples.len() as f32 % bounds.w) as usize;
+            samples.drain(..overflow);
+            chunk_size
+        } else {
+            1
+        };
 
         for (x, chunk) in samples.chunks(chunk_size).enumerate() {
             let chunk_average = chunk.iter().sum::<f32>() / (chunk.len() as f32);
@@ -63,4 +75,45 @@ impl<L> View for Scope<L>
         paint.set_line_width(1.0);
         canvas.stroke_path(&mut wave, &paint);
     }
+}
+
+fn find_wave_starts(samples: &Vec<f32>) -> Vec<usize> {
+    let mut zero_crossings = Vec::new();
+    for i in 1..samples.len() {
+        if samples[i - 1] * samples[i] < 0.0 && samples[i - 1] < 0.0 {
+            zero_crossings.push(i);
+        }
+    }
+
+    zero_crossings
+}
+
+fn crop_to_screen(samples: &Vec<f32>, mut start_points: Vec<usize>, width: f32, min_waves: usize) -> &[f32] {
+    start_points.reverse();
+
+    if let Some(end_index) = start_points.first() {
+        if let Some(mut start_index) = start_points.get(min_waves) {
+
+            // Calculate the smallest amount of waves needed to fill the screen
+            let mut waves = min_waves;
+            while ((end_index - start_index) as f32) < width {
+                if let Some(index) = start_points.get(waves) {
+                    start_index = index;
+                    waves += 2;
+                } else {
+                    break;
+                }
+            }
+
+            let result = &samples[*start_index..=*end_index];
+            return if waves > min_waves {
+                let start = result.len() - min(result.len(), width as usize);
+                &result[start..]
+            } else {
+                result
+            }
+        }
+    }
+
+    samples
 }
