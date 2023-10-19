@@ -8,6 +8,7 @@ Mainly created to learn about writing Synthesizers.
 - [x] Polyphonic midi input
 - [x] ADSR
 - [x] Visualisation
+  - [ ] Improve visualisation
 - [ ] Other oscillator waves
 - [ ] Oscillator parameters
 - [ ] Multiple oscillators
