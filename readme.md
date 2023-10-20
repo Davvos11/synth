@@ -9,7 +9,7 @@ Mainly created to learn about writing Synthesizers.
 - [x] ADSR
 - [x] Visualisation
   - [ ] Improve visualisation
-- [ ] Other oscillator waves
+- [x] Other oscillator waves
 - [ ] Oscillator parameters
 - [ ] Multiple oscillators
 - [ ] Filters
