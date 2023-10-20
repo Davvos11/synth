@@ -107,7 +107,12 @@ impl Plugin for Synth {
                 //     break;
                 // }
 
-                self.notes.process_midi(event, self.sample_rate, adsr);
+                self.notes.process_midi(
+                    event,
+                    self.sample_rate,
+                    adsr,
+                    self.params.wave_kind.value()
+                );
 
                 next_event = context.next_event();
             }

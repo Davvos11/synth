@@ -15,8 +15,6 @@ pub fn visualiser(cx: &mut Context)
 
 
     VStack::new(cx, |cx| {
-        Scope::new(cx, visual_data_lens.clone());
-
         PeakMeter::new(
             cx,
             visual_data_lens.clone().map(
@@ -24,6 +22,8 @@ pub fn visualiser(cx: &mut Context)
             ),
             Some(Duration::from_millis(600)),
         );
+
+        Scope::new(cx, visual_data_lens.clone());
 
     }).row_between(Pixels(15.0))
 }

@@ -21,13 +21,14 @@ impl NoteStorage {
                         event: PluginNoteEvent<Synth>,
                         sample_rate: f32,
                         adsr: Adsr,
+                        wave_kind: WaveKind,
     ) {
         match event {
             NoteEvent::NoteOn { note, velocity, .. } => {
                 // Create new sine wave for this note
                 let new_note = Note::new(
                     Wave::new(util::midi_note_to_freq(note),
-                              WaveKind::Square,
+                              wave_kind,
                               sample_rate
                     ),
                     adsr,

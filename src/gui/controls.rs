@@ -2,11 +2,14 @@ use nih_plug_vizia::vizia::context::Context;
 use nih_plug_vizia::widgets::ParamSlider;
 use crate::gui::GuiData;
 use nih_plug_vizia::vizia::prelude::*;
+use crate::gui::controls::selector::Selector;
+
+mod selector;
 
 pub fn controls(cx: &mut Context) -> Handle<VStack> {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Volume");
-        ParamSlider::new(cx, GuiData::params, |params| &params.volume);
+        Label::new(cx, "Wave");
+        Selector::new(cx, GuiData::params, |p|&p.wave_kind);
 
         Label::new(cx, "Attack");
         ParamSlider::new(cx, GuiData::params, |params| &params.attack);

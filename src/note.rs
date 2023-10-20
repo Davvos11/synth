@@ -1,4 +1,6 @@
 use std::f32::consts;
+use enum_iterator::Sequence;
+use nih_plug::prelude::Enum;
 pub use crate::note::envelope::Adsr;
 use crate::note::envelope::Envelope;
 
@@ -43,10 +45,15 @@ impl Note {
     }
 }
 
+#[derive(nih_plug::prelude::Enum, PartialEq, Clone, Copy, Sequence)]
 pub enum WaveKind {
+    #[id = "sine"]
     Sine,
+    #[id = "triangle"]
     Triangle,
+    #[id = "saw"]
     Saw,
+    #[id = "square"]
     Square,
 }
 

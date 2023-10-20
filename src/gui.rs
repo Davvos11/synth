@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use nih_plug::editor::Editor;
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::widgets::{ResizeHandle};
+use nih_plug_vizia::widgets::{ParamSlider, ResizeHandle};
 use crate::gui::controls::controls;
 use crate::gui::visualiser::visualiser;
 use crate::SynthParams;
@@ -35,6 +35,8 @@ pub(crate) fn create(
             assets::register_noto_sans_light(cx);
             assets::register_noto_sans_thin(cx);
 
+            cx.add_stylesheet("assets/style.css").expect("Failed to load stylesheet");
+
             GuiData {
                 params: params.clone(),
                 visual_data: visual_data.clone(),
@@ -53,7 +55,14 @@ pub(crate) fn create(
 
                 HStack::new(cx, |cx| {
                     controls(cx);
-                    visualiser(cx);
+                    VStack::new(cx, |cx| {
+                        Label::new(cx, "Volume");
+                        ParamSlider::new(cx, GuiData::params, |params| &params.volume);
+
+                        visualiser(cx);
+                    }).row_between(Pixels(0.0))
+                        .child_left(Stretch(1.0))
+                        .child_right(Stretch(1.0));
                 }).col_between(Pixels(20.0));
             }).child_space(Stretch(1.0));
         })

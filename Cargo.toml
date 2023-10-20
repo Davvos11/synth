@@ -19,3 +19,4 @@ nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["a
 nih_plug_vizia = { git = "https://github.com/robbert-vdh/nih-plug.git" }
 indexmap = "2.0.2"
 triple_buffer = "6.2.0"
+enum-iterator = "1.4.1"
