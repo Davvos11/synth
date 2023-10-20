@@ -94,6 +94,11 @@ impl Plugin for Synth {
             // Get ui parameters
             let volume = self.params.volume.smoothed.next();
             let adsr = self.get_adsr();
+            let wave_kind = self.params.wave_kind.value();
+
+            // Update parameters of notes that are playing
+            self.notes.update_adsr(adsr);
+            self.notes.update_wave_kind(wave_kind);
 
             // Process midi (modifies `self.notes` and `self.released_notes`)
             let mut next_event = context.next_event();
@@ -111,7 +116,7 @@ impl Plugin for Synth {
                     event,
                     self.sample_rate,
                     adsr,
-                    self.params.wave_kind.value()
+                    wave_kind
                 );
 
                 next_event = context.next_event();

@@ -82,4 +82,8 @@ impl Envelope {
         self.last_volume = gain;
         (gain, finished)
     }
+    
+    pub fn set_adsr(&mut self, adsr: Adsr) {
+        self.adsr = adsr;
+    }
 }

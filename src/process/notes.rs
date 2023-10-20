@@ -29,7 +29,7 @@ impl NoteStorage {
                 let new_note = Note::new(
                     Wave::new(util::midi_note_to_freq(note),
                               wave_kind,
-                              sample_rate
+                              sample_rate,
                     ),
                     adsr,
                     velocity,
@@ -71,5 +71,24 @@ impl NoteStorage {
             .map(|n| n.get_sample()).sum::<f32>();
 
         new_sample
+    }
+
+    fn apply_to_all_notes(&mut self, to_apply: impl Fn(&mut Note)) {
+        for (_, note) in &mut self.notes.map {
+            to_apply(note);
+        }
+        for note in &mut self.released_notes {
+            to_apply(note);
+        }
+    }
+
+    // TODO store ADSR and wave kind in NoteStorage and have all notes reference it
+    //  instead of having to update it for each note
+    pub fn update_adsr(&mut self, adsr: Adsr) {
+        self.apply_to_all_notes(|n| n.update_adsr(adsr));
+    }
+
+    pub fn update_wave_kind(&mut self, wave_kind: WaveKind) {
+        self.apply_to_all_notes(|n| n.update_wave_kind(wave_kind))
     }
 }

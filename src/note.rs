@@ -43,6 +43,14 @@ impl Note {
     pub fn finished(&self) -> bool {
         self.finished
     }
+
+    pub fn update_adsr(&mut self, adsr: Adsr) {
+        self.envelope.set_adsr(adsr);
+    }
+
+    pub fn update_wave_kind(&mut self, wave_kind: WaveKind) {
+        self.wave.set_kind(wave_kind);
+    }
 }
 
 #[derive(nih_plug::prelude::Enum, PartialEq, Clone, Copy, Sequence)]
@@ -102,5 +110,8 @@ impl Wave {
 
         // Return the sine value
         wave
+    }
+    pub fn set_kind(&mut self, kind: WaveKind) {
+        self.kind = kind;
     }
 }
