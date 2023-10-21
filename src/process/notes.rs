@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use crate::fixed_map::FixedMap;
 use crate::note::{Adsr, Note, Wave, WaveKind};
@@ -6,6 +7,9 @@ use crate::Synth;
 pub struct NoteStorage {
     notes: FixedMap<u8, Note>,
     released_notes: Vec<Note>,
+
+    wave_kind: Arc<Mutex<WaveKind>>,
+    adsr: Arc<Mutex<Adsr>>,
 }
 
 impl NoteStorage {
@@ -13,6 +17,8 @@ impl NoteStorage {
         Self {
             notes: FixedMap::new(64),
             released_notes: Vec::with_capacity(64),
+            wave_kind: Arc::new(Mutex::new(WaveKind::Sine)),
+            adsr: Arc::new(Mutex::new(Adsr::default()))
         }
     }
 
@@ -20,18 +26,16 @@ impl NoteStorage {
     pub fn process_midi(&mut self,
                         event: PluginNoteEvent<Synth>,
                         sample_rate: f32,
-                        adsr: Adsr,
-                        wave_kind: WaveKind,
     ) {
         match event {
             NoteEvent::NoteOn { note, velocity, .. } => {
                 // Create new sine wave for this note
                 let new_note = Note::new(
                     Wave::new(util::midi_note_to_freq(note),
-                              wave_kind,
+                              self.wave_kind.clone(),
                               sample_rate,
                     ),
-                    adsr,
+                    self.adsr.clone(),
                     velocity,
                 );
                 // Add new note to map
@@ -73,22 +77,11 @@ impl NoteStorage {
         new_sample
     }
 
-    fn apply_to_all_notes(&mut self, to_apply: impl Fn(&mut Note)) {
-        for (_, note) in &mut self.notes.map {
-            to_apply(note);
-        }
-        for note in &mut self.released_notes {
-            to_apply(note);
-        }
-    }
-
-    // TODO store ADSR and wave kind in NoteStorage and have all notes reference it
-    //  instead of having to update it for each note
     pub fn update_adsr(&mut self, adsr: Adsr) {
-        self.apply_to_all_notes(|n| n.update_adsr(adsr));
+        *self.adsr.lock().unwrap() = adsr;
     }
 
     pub fn update_wave_kind(&mut self, wave_kind: WaveKind) {
-        self.apply_to_all_notes(|n| n.update_wave_kind(wave_kind))
+        *self.wave_kind.lock().unwrap() = wave_kind;
     }
 }

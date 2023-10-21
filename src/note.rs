@@ -1,4 +1,5 @@
 use std::f32::consts;
+use std::sync::{Arc, Mutex};
 use enum_iterator::Sequence;
 use nih_plug::prelude::Enum;
 pub use crate::note::envelope::Adsr;
@@ -15,7 +16,7 @@ pub struct Note {
 }
 
 impl Note {
-    pub fn new(wave: Wave, adsr: Adsr, velocity: f32) -> Self {
+    pub fn new(wave: Wave, adsr: Arc<Mutex<Adsr>>, velocity: f32) -> Self {
         let sample_rate = wave.sample_rate;
 
         Self {
@@ -44,13 +45,6 @@ impl Note {
         self.finished
     }
 
-    pub fn update_adsr(&mut self, adsr: Adsr) {
-        self.envelope.set_adsr(adsr);
-    }
-
-    pub fn update_wave_kind(&mut self, wave_kind: WaveKind) {
-        self.wave.set_kind(wave_kind);
-    }
 }
 
 #[derive(nih_plug::prelude::Enum, PartialEq, Clone, Copy, Sequence)]
@@ -69,11 +63,11 @@ pub struct Wave {
     phase: f32,
     frequency: f32,
     sample_rate: f32,
-    kind: WaveKind,
+    kind: Arc<Mutex<WaveKind>>,
 }
 
 impl Wave {
-    pub fn new(frequency: f32, kind: WaveKind, sample_rate: f32) -> Self {
+    pub fn new(frequency: f32, kind: Arc<Mutex<WaveKind>>, sample_rate: f32) -> Self {
         Self {
             frequency,
             phase: 0.0,
@@ -86,7 +80,10 @@ impl Wave {
         // Calculate the next step of the wave and phase
         let phase_delta = self.frequency / self.sample_rate;
 
-        let wave = match self.kind {
+        // Get the wave kind
+        let kind = *self.kind.lock().expect("Failed to acquire wave_kind lock");
+
+        let wave = match kind {
             WaveKind::Sine => {
                 (self.phase * consts::TAU).sin()
             }
@@ -110,8 +107,5 @@ impl Wave {
 
         // Return the sine value
         wave
-    }
-    pub fn set_kind(&mut self, kind: WaveKind) {
-        self.kind = kind;
     }
 }

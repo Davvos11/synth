@@ -115,8 +115,6 @@ impl Plugin for Synth {
                 self.notes.process_midi(
                     event,
                     self.sample_rate,
-                    adsr,
-                    wave_kind
                 );
 
                 next_event = context.next_event();

@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 #[derive(Clone, Copy)]
 pub struct Adsr {
     attack: f32,
@@ -12,8 +14,14 @@ impl Adsr {
     }
 }
 
+impl Default for Adsr {
+    fn default() -> Self {
+        Self {attack: 0.01, delay: 0.0, sustain: 1.0, release: 0.01}
+    }
+}
+
 pub struct Envelope {
-    adsr: Adsr,
+    adsr: Arc<Mutex<Adsr>>,
     delta: f32,
     time: f32,
     last_volume: f32,
@@ -31,7 +39,7 @@ enum Stage {
 }
 
 impl Envelope {
-    pub fn new(adsr: Adsr, sample_rate: f32) -> Self {
+    pub fn new(adsr: Arc<Mutex<Adsr>>, sample_rate: f32) -> Self {
         Self {
             adsr,
             delta: 1.0 / sample_rate,
@@ -46,25 +54,28 @@ impl Envelope {
     }
 
     pub fn get_gain(&mut self) -> (f32, bool) {
+        // Get ADSR value
+        let adsr = *self.adsr.lock().expect("Failed to acquire ADSR lock");
+        
         // Calculate value based on envelope curve
         let gain = match self.stage {
             Stage::Held => {
-                if self.time < self.adsr.attack {
+                if self.time < adsr.attack {
                     // Attack phase
-                    self.time / self.adsr.attack
-                } else if self.time < self.adsr.attack + self.adsr.delay {
+                    self.time / adsr.attack
+                } else if self.time < adsr.attack + adsr.delay {
                     // Attack -> sustain phase
                     1.0 -
-                        (self.time - self.adsr.attack) / self.adsr.delay *
-                            (1.0 - self.adsr.sustain)
+                        (self.time - adsr.attack) / adsr.delay *
+                            (1.0 - adsr.sustain)
                 } else {
-                    self.adsr.sustain
+                    adsr.sustain
                 }
             }
             Stage::Released {released_at, volume_before} => {
-                if self.time <= released_at + self.adsr.release {
+                if self.time <= released_at + adsr.release {
                     volume_before - (self.time - released_at) /
-                        (self.adsr.release / volume_before)
+                        (adsr.release / volume_before)
                 } else {
                     self.stage = Stage::Finished;
                     0.0
@@ -83,7 +94,4 @@ impl Envelope {
         (gain, finished)
     }
     
-    pub fn set_adsr(&mut self, adsr: Adsr) {
-        self.adsr = adsr;
-    }
 }
