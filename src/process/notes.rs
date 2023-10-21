@@ -1,14 +1,14 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use crate::fixed_map::FixedMap;
-use crate::note::{Adsr, Note, Wave, WaveKind};
+use crate::note::{Adsr, Note, Wave, WaveProperties};
 use crate::Synth;
 
 pub struct NoteStorage {
     notes: FixedMap<u8, Note>,
     released_notes: Vec<Note>,
 
-    wave_kind: Arc<Mutex<WaveKind>>,
+    wave_properties: Arc<Mutex<WaveProperties>>,
     adsr: Arc<Mutex<Adsr>>,
 }
 
@@ -17,7 +17,7 @@ impl NoteStorage {
         Self {
             notes: FixedMap::new(64),
             released_notes: Vec::with_capacity(64),
-            wave_kind: Arc::new(Mutex::new(WaveKind::Sine)),
+            wave_properties: Arc::new(Mutex::new(WaveProperties::default())),
             adsr: Arc::new(Mutex::new(Adsr::default()))
         }
     }
@@ -32,7 +32,7 @@ impl NoteStorage {
                 // Create new sine wave for this note
                 let new_note = Note::new(
                     Wave::new(util::midi_note_to_freq(note),
-                              self.wave_kind.clone(),
+                              self.wave_properties.clone(),
                               sample_rate,
                     ),
                     self.adsr.clone(),
@@ -81,7 +81,7 @@ impl NoteStorage {
         *self.adsr.lock().unwrap() = adsr;
     }
 
-    pub fn update_wave_kind(&mut self, wave_kind: WaveKind) {
-        *self.wave_kind.lock().unwrap() = wave_kind;
+    pub fn update_wave_properties(&mut self, wave_properties: WaveProperties) {
+        *self.wave_properties.lock().unwrap() = wave_properties;
     }
 }

@@ -25,6 +25,9 @@ pub struct SynthParams {
 
     #[id = "wave_kind"]
     pub wave_kind: EnumParam<WaveKind>,
+
+    #[id = "pwm"]
+    pub pulse_width: FloatParam,
 }
 
 impl Default for SynthParams {
@@ -88,6 +91,16 @@ impl Default for SynthParams {
                 .with_unit("sec"),
 
             wave_kind: EnumParam::new("Wave",  WaveKind::Triangle),
+
+            pulse_width: FloatParam::new(
+                "Pulse Width",
+                0.5,
+                FloatRange::Linear {
+                    min: 0.0,
+                    max: 1.0,
+                }
+            ).with_smoother(SmoothingStyle::Linear(1.0))
+                .with_step_size(0.01),
         }
     }
 }

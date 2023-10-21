@@ -59,20 +59,40 @@ pub enum WaveKind {
     Square,
 }
 
+pub struct WaveProperties {
+    kind: WaveKind,
+    pulse_width: f32,
+}
+
+impl WaveProperties {
+    pub fn new(kind: WaveKind, pulse_width: f32) -> Self {
+        Self { kind, pulse_width }
+    }
+}
+
+impl Default for WaveProperties {
+    fn default() -> Self {
+        Self {
+            kind: WaveKind::Sine,
+            pulse_width: 0.5,
+        }
+    }
+}
+
 pub struct Wave {
     phase: f32,
     frequency: f32,
     sample_rate: f32,
-    kind: Arc<Mutex<WaveKind>>,
+    properties: Arc<Mutex<WaveProperties>>,
 }
 
 impl Wave {
-    pub fn new(frequency: f32, kind: Arc<Mutex<WaveKind>>, sample_rate: f32) -> Self {
+    pub fn new(frequency: f32, properties: Arc<Mutex<WaveProperties>>, sample_rate: f32) -> Self {
         Self {
             frequency,
             phase: 0.0,
             sample_rate,
-            kind,
+            properties,
         }
     }
 
@@ -80,10 +100,11 @@ impl Wave {
         // Calculate the next step of the wave and phase
         let phase_delta = self.frequency / self.sample_rate;
 
-        // Get the wave kind
-        let kind = *self.kind.lock().expect("Failed to acquire wave_kind lock");
+        // Get the wave properties
+        let properties = self.properties.lock().expect("Failed to acquire wave_kind lock");
 
-        let wave = match kind {
+
+        let wave = match properties.kind {
             WaveKind::Sine => {
                 (self.phase * consts::TAU).sin()
             }
@@ -94,8 +115,7 @@ impl Wave {
                 2.0 * (self.phase - (self.phase + 0.5).floor())
             }
             WaveKind::Square => {
-                // TODO PWM by modifying 0.5
-                if self.phase < 0.5 { 1.0 } else { -1.0 }
+                if self.phase < properties.pulse_width { 1.0 } else { -1.0 }
             }
         };
 

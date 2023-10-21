@@ -11,6 +11,9 @@ pub fn controls(cx: &mut Context) -> Handle<VStack> {
         Label::new(cx, "Wave");
         Selector::new(cx, GuiData::params, |p|&p.wave_kind);
 
+        Label::new(cx, "Pulse Width");
+        ParamSlider::new(cx, GuiData::params, |params| &params.pulse_width);
+
         Label::new(cx, "Attack");
         ParamSlider::new(cx, GuiData::params, |params| &params.attack);
 

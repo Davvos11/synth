@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use triple_buffer::TripleBuffer;
-use crate::note::Adsr;
+use crate::note::{Adsr, WaveProperties};
 use crate::params::SynthParams;
 use crate::process::notes::NoteStorage;
 use crate::process::visual_data::{SynthData, VisualData};
@@ -94,11 +94,14 @@ impl Plugin for Synth {
             // Get ui parameters
             let volume = self.params.volume.smoothed.next();
             let adsr = self.get_adsr();
-            let wave_kind = self.params.wave_kind.value();
+            let wave_properties = WaveProperties::new(
+                self.params.wave_kind.value(),
+                self.params.pulse_width.value(),
+            );
 
             // Update parameters of notes that are playing
             self.notes.update_adsr(adsr);
-            self.notes.update_wave_kind(wave_kind);
+            self.notes.update_wave_properties(wave_properties);
 
             // Process midi (modifies `self.notes` and `self.released_notes`)
             let mut next_event = context.next_event();
