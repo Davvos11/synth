@@ -1,7 +1,9 @@
-use enum_iterator::{all, Sequence};
+use std::rc::Rc;
+use enum_iterator::{all, All, Sequence};
 use nih_plug::prelude::{Enum, EnumParam, Param};
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::param_base::ParamWidgetBase;
+use crate::gui::grid::{Grid, GridVerticalModifiers};
 
 enum SelectorEvent<T>
     where T: PartialEq + Enum + 'static + Sequence + Send + Copy
@@ -18,7 +20,7 @@ pub struct Selector<T>
 }
 
 impl<T> Selector<T>
-    where T: PartialEq + Enum + 'static + Sequence + Send + Copy
+    where T: PartialEq + Enum + 'static + Sequence + Send + Copy + Clone
 {
     pub fn new<L, Params, FMap>(cx: &mut Context, params: L, params_to_param: FMap) -> Handle<Self>
         where L: Lens<Target=Params> + Clone,
@@ -28,19 +30,39 @@ impl<T> Selector<T>
         Self {
             param_base: ParamWidgetBase::new(cx, params.clone(), params_to_param),
             data: None,
-        }.build(cx, |cx| {
-            HStack::new(cx, |cx| {
-                for option in all::<T>() {
+        }.build(cx, move |cx: &mut Context| {
+            let mut buttons = Vec::new();
+            let options: All<T> = all::<T>();
+
+            for option in options {
+                let option_rc0 = Rc::new(option);
+                let option_rc1 = Rc::clone(&option_rc0);
+                let option_rc2 = Rc::clone(&option_rc0);
+
+                buttons.push(|cx: &mut Context| {
                     SelectorButton::new(cx, move |cx| {
-                        cx.emit(SelectorEvent::Select(option))
-                    }, |cx| {
-                        let name = get_enum_name(option);
+                        let cloned_option = Rc::clone(&option_rc0);
+                        cx.emit(SelectorEvent::Select(*cloned_option))
+                    }, move |cx| {
+                        let cloned_option = Rc::clone(&option_rc1);
+                        let name = get_enum_name(*cloned_option);
                         Label::new(cx, &name)
                     }).checked(ParamWidgetBase::make_lens(params.clone(), params_to_param, move |param| {
-                        option == param.value()
+                        let cloned_option = Rc::clone(&option_rc2);
+                        *cloned_option == param.value()
                     }));
-                }
-            }).col_between(Pixels(3.0));
+                })
+            }
+
+            Grid::new(2,
+                      GridVerticalModifiers {
+                          col_between: Pixels(5.0),
+                          child_bottom: Auto,
+                          child_top: Auto,
+                      },
+                      cx,
+                      buttons,
+            ).row_between(Pixels(5.0));
         })
     }
 }

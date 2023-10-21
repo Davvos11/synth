@@ -10,6 +10,7 @@ use crate::process::visual_data::VisualData;
 
 mod controls;
 mod visualiser;
+mod grid;
 
 #[derive(Lens)]
 pub struct GuiData {
