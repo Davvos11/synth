@@ -93,7 +93,7 @@ impl Default for SynthParams {
             wave_kind: EnumParam::new("Wave",  WaveKind::Triangle),
 
             pulse_width: FloatParam::new(
-                "Pulse Width",
+                "PW",
                 0.5,
                 FloatRange::Linear {
                     min: 0.0,

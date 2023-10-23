@@ -11,6 +11,7 @@ use crate::process::visual_data::VisualData;
 mod controls;
 mod visualiser;
 mod grid;
+mod knob;
 
 #[derive(Lens)]
 pub struct GuiData {

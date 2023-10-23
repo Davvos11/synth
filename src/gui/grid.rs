@@ -4,6 +4,7 @@ use nih_plug_vizia::vizia::prelude::*;
 pub struct Grid {}
 
 impl Grid {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new<F>(cols: usize, modifiers: GridVerticalModifiers, cx: &mut Context, mut elements: Vec<F>) -> Handle<VStack>
         where
             F: FnOnce(&mut Context),
