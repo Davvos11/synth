@@ -12,7 +12,6 @@ impl Grid {
         let len = elements.len();
         let rows = (len / cols) + (len % cols != 0) as usize;
 
-        // TODO add padding
         VStack::new(cx, |cx| {
             for _ in 0..rows {
                 let index = min(elements.len(), cols);
@@ -23,7 +22,9 @@ impl Grid {
                     }
                 }).col_between(modifiers.col_between)
                     .child_top(modifiers.child_top)
-                    .child_bottom(modifiers.child_bottom);
+                    .child_bottom(modifiers.child_bottom)
+                    .child_left(modifiers.child_left)
+                    .child_right(modifiers.child_right);
             }
         })
     }
@@ -33,6 +34,8 @@ pub struct GridVerticalModifiers {
     pub col_between: Units,
     pub child_top: Units,
     pub child_bottom: Units,
+    pub child_left: Units,
+    pub child_right: Units,
 }
 
 

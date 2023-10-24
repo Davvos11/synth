@@ -22,7 +22,11 @@ pub struct Selector<T>
 impl<T> Selector<T>
     where T: PartialEq + Enum + 'static + Sequence + Send + Copy + Clone
 {
-    pub fn new<L, Params, FMap>(cx: &mut Context, params: L, params_to_param: FMap) -> Handle<Self>
+    pub fn new<L, Params, FMap>(cx: &mut Context,
+                                params: L,
+                                params_to_param: FMap,
+                                param_to_label: fn(T) -> ButtonLabel,
+    ) -> Handle<Self>
         where L: Lens<Target=Params> + Clone,
               Params: 'static,
               FMap: Fn(&Params) -> &EnumParam<T> + Copy + 'static,
@@ -45,8 +49,16 @@ impl<T> Selector<T>
                         cx.emit(SelectorEvent::Select(*cloned_option))
                     }, move |cx| {
                         let cloned_option = Rc::clone(&option_rc1);
-                        let name = get_enum_name(*cloned_option);
-                        Label::new(cx, &name)
+                        match param_to_label(*cloned_option) {
+                            ButtonLabel::Text(name) => {
+                                HStack::new(cx, |cx| { Label::new(cx, &name); })
+                            }
+                            #[allow(unreachable_code, unused_variables)]
+                            ButtonLabel::Image(img) => {
+                                panic!("Images are not supported in nih_plug_vizia :(");
+                                HStack::new(cx, |cx| { Image::new(cx, &img); })
+                            }
+                        }
                     }).checked(ParamWidgetBase::make_lens(params.clone(), params_to_param, move |param| {
                         let cloned_option = Rc::clone(&option_rc2);
                         *cloned_option == param.value()
@@ -59,6 +71,8 @@ impl<T> Selector<T>
                           col_between: Pixels(5.0),
                           child_bottom: Auto,
                           child_top: Auto,
+                          child_left: Stretch(1.0),
+                          child_right: Stretch(1.0),
                       },
                       cx,
                       buttons,
@@ -87,9 +101,15 @@ impl<T> View for Selector<T>
     }
 }
 
-fn get_enum_name<E>(enum_value: E) -> String
+pub fn get_enum_name<E>(enum_value: E) -> String
     where E: PartialEq + Enum + 'static + Sequence + Send + Copy {
     EnumParam::new("", enum_value).to_string()
+}
+
+#[allow(dead_code)]
+pub enum ButtonLabel {
+    Text(String),
+    Image(String),
 }
 
 // TODO the only way to copy button functionality and changing the element name

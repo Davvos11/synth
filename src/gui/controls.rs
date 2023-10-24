@@ -2,7 +2,7 @@ use nih_plug_vizia::vizia::context::Context;
 use nih_plug_vizia::widgets::ParamSlider;
 use crate::gui::GuiData;
 use nih_plug_vizia::vizia::prelude::*;
-use crate::gui::controls::selector::Selector;
+use crate::gui::controls::selector::{ButtonLabel, get_enum_name, Selector};
 use crate::gui::knob::ParamKnob;
 
 mod selector;
@@ -12,7 +12,9 @@ pub fn controls(cx: &mut Context) -> Handle<VStack> {
         Label::new(cx, "Wave");
 
         HStack::new(cx, |cx| {
-            Selector::new(cx, GuiData::params, |p|&p.wave_kind);
+            Selector::new(cx, GuiData::params, |p| &p.wave_kind,
+                          |v| ButtonLabel::Text(get_enum_name(v)),
+            );
             ParamKnob::new(cx, GuiData::params, |p| &p.pulse_width, true);
         });
 
@@ -27,7 +29,6 @@ pub fn controls(cx: &mut Context) -> Handle<VStack> {
 
         Label::new(cx, "Release");
         ParamSlider::new(cx, GuiData::params, |params| &params.release);
-
     }).row_between(Pixels(0.0))
         .child_left(Stretch(1.0))
         .child_right(Stretch(1.0))
