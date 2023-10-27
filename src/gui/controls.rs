@@ -1,4 +1,3 @@
-use nih_plug::prelude::Enum;
 use nih_plug_vizia::vizia::context::Context;
 use nih_plug_vizia::widgets::ParamSlider;
 use crate::gui::GuiData;
