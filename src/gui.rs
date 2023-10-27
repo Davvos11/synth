@@ -3,7 +3,7 @@ use nih_plug::editor::Editor;
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::{ParamSlider, ResizeHandle};
-use crate::gui::controls::controls;
+use crate::gui::controls::Controls;
 use crate::gui::visualiser::visualiser;
 use crate::SynthParams;
 use crate::process::visual_data::VisualData;
@@ -56,7 +56,7 @@ pub(crate) fn create(
                     .bottom(Pixels(20.0));
 
                 HStack::new(cx, |cx| {
-                    controls(cx);
+                    Controls::new(cx);
                     VStack::new(cx, |cx| {
                         Label::new(cx, "Volume");
                         ParamSlider::new(cx, GuiData::params, |params| &params.volume);

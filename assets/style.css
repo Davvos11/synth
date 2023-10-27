@@ -15,3 +15,9 @@ knob label {
 knob .tick {
     background-color: #696969;
 }
+
+param-selector param-button {
+    width: 50px;
+    font-size: 12px;
+    child-space: 1s;
+}
