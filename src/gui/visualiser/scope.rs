@@ -1,5 +1,4 @@
 use std::cmp::min;
-use std::time::SystemTime;
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::vizia::vg;
 use nih_plug_vizia::vizia::vg::Paint;
@@ -49,7 +48,7 @@ impl<L> View for Scope<L>
         let baseline = bounds.y + bounds.h / 2.0;
         wave.move_to(bounds.x, baseline);
 
-        let start_points = find_wave_starts(&samples);
+        let start_points = find_wave_starts(samples);
         // Crop to screen
         // TODO cache crop size or base on note that is playing
         samples = crop_to_screen(samples, start_points, bounds.w, 2);
@@ -65,6 +64,7 @@ impl<L> View for Scope<L>
             1
         };
 
+        // Draw to screen (use steps of `chunk_size`) if there are more datapoints than pixels
         for (x, i) in (0..samples.len()).step_by(chunk_size).enumerate() {
             let x = bounds.x + x as f32;
             let y = baseline + samples[i] * (bounds.h / 2.0);
@@ -97,7 +97,8 @@ fn crop_to_screen(samples: &[f32], mut start_points: Vec<usize>, width: f32, min
 
             // Calculate the smallest amount of waves needed to fill the screen
             let mut waves = min_waves;
-            while ((end_index - start_index) as f32) < width {
+            let width = width as usize;
+            while (end_index - start_index) <= width {
                 if let Some(index) = start_points.get(waves) {
                     start_index = index;
                     waves += 2;
@@ -108,7 +109,7 @@ fn crop_to_screen(samples: &[f32], mut start_points: Vec<usize>, width: f32, min
 
             let result = &samples[*start_index..=*end_index];
             return if waves > min_waves {
-                let start = result.len() - min(result.len(), width as usize);
+                let start = result.len() - min(result.len(), width);
                 &result[start..]
             } else {
                 result
