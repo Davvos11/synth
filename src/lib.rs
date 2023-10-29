@@ -20,7 +20,7 @@ pub struct Synth {
     sample_rate: f32,
     notes: NoteStorage,
     data: SynthData,
-    output_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
+    visual_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
 }
 
 impl Default for Synth {
@@ -32,7 +32,7 @@ impl Default for Synth {
             sample_rate: 1.0,
             notes: NoteStorage::new(),
             data: SynthData::new(synth_data_input),
-            output_data: Arc::new(Mutex::new(synth_data_output)),
+            visual_data: Arc::new(Mutex::new(synth_data_output)),
         }
     }
 }
@@ -73,7 +73,7 @@ impl Plugin for Synth {
         gui::create(
             self.params.clone(),
             self.params.editor_state.clone(),
-            self.output_data.clone(),
+            self.visual_data.clone(),
         )
     }
 

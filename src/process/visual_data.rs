@@ -27,7 +27,7 @@ impl Default for VisualData {
     fn default() -> Self {
         Self {
             peak_meter: util::MINUS_INFINITY_DB,
-            samples: Vec::with_capacity(10_000),
+            samples: Vec::with_capacity(512),
         }
     }
 }
@@ -50,6 +50,7 @@ impl SynthData {
 
         // Save new sample to moving buffer
         while data.samples.len() >= data.samples.capacity() {
+            // TODO O(n), use something more suitable than a vector
             data.samples.remove(0);
         }
         data.samples.push(new_sample);
