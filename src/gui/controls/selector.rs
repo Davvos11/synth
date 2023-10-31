@@ -44,22 +44,25 @@ impl<T> Selector<T>
                 let option_rc2 = Rc::clone(&option_rc0);
 
                 buttons.push(|cx: &mut Context| {
-                    SelectorButton::new(cx, move |cx| {
-                        let cloned_option = Rc::clone(&option_rc0);
-                        cx.emit(SelectorEvent::Select(*cloned_option))
-                    }, move |cx| {
-                        let cloned_option = Rc::clone(&option_rc1);
-                        match param_to_label(*cloned_option) {
-                            ButtonLabel::Text(name) => {
-                                HStack::new(cx, |cx| { Label::new(cx, &name); })
-                            }
-                            #[allow(unreachable_code, unused_variables)]
-                            ButtonLabel::Image(img) => {
-                                panic!("Images are not supported in nih_plug_vizia :(");
-                                HStack::new(cx, |cx| { Image::new(cx, &img); })
+                    SelectorButton::new(
+                        cx, move |cx| {
+                            let cloned_option = Rc::clone(&option_rc0);
+                            cx.emit(SelectorEvent::Select(*cloned_option))
+                        },
+                        move |cx| {
+                            let cloned_option = Rc::clone(&option_rc1);
+                            match param_to_label(*cloned_option) {
+                                ButtonLabel::Text(name) => {
+                                    HStack::new(cx, |cx| { Label::new(cx, &name); })
+                                }
+                                #[allow(unreachable_code, unused_variables)]
+                                ButtonLabel::Image(img) => {
+                                    panic!("Images are not supported in nih_plug_vizia :(");
+                                    HStack::new(cx, |cx| { Image::new(cx, &img); })
+                                }
                             }
                         }
-                    }).checked(ParamWidgetBase::make_lens(params.clone(), params_to_param, move |param| {
+                    ).checked(ParamWidgetBase::make_lens(params.clone(), params_to_param, move |param| {
                         let cloned_option = Rc::clone(&option_rc2);
                         *cloned_option == param.value()
                     }));
@@ -69,8 +72,8 @@ impl<T> Selector<T>
             Grid::new(2,
                       GridVerticalModifiers {
                           col_between: Pixels(5.0),
-                          child_bottom: Auto,
-                          child_top: Auto,
+                          child_bottom: Pixels(1.0),
+                          child_top: Pixels(1.0),
                           child_left: Stretch(1.0),
                           child_right: Stretch(1.0),
                       },

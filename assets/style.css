@@ -21,3 +21,13 @@ param-selector param-button {
     font-size: 12px;
     child-space: 1s;
 }
+
+/*vstack {*/
+/*    outline-color: red;*/
+/*    outline-width: 2px;*/
+/*}*/
+
+/*hstack {*/
+/*    outline-color: blue;*/
+/*    outline-width: 1px;*/
+/*}*/

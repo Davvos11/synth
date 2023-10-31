@@ -7,23 +7,30 @@ use crate::gui::visualiser::scope::Scope;
 
 mod scope;
 
-pub fn visualiser(cx: &mut Context)
-                  -> Handle<VStack> {
-    let visual_data_lens = GuiData::visual_data.map(
-        |data| data.lock().unwrap().read().clone()
-    );
+pub struct Visualiser {}
+
+impl View for Visualiser {}
+
+impl Visualiser {
+    pub fn new(cx: &mut Context) -> Handle<Self> {
+        Self {}.build(cx, |cx| {
+            let visual_data_lens = GuiData::visual_data.map(
+                |data| data.lock().unwrap().read().clone()
+            );
 
 
-    VStack::new(cx, |cx| {
-        PeakMeter::new(
-            cx,
-            visual_data_lens.clone().map(
-                |d| util::gain_to_db_fast(d.peak_meter)
-            ),
-            Some(Duration::from_millis(600)),
-        );
+            VStack::new(cx, |cx| {
+                PeakMeter::new(
+                    cx,
+                    visual_data_lens.clone().map(
+                        |d| util::gain_to_db_fast(d.peak_meter)
+                    ),
+                    Some(Duration::from_millis(600)),
+                );
 
-        Scope::new(cx, visual_data_lens.clone());
+                Scope::new(cx, visual_data_lens.clone());
 
-    }).row_between(Pixels(15.0))
+            }).row_between(Pixels(15.0));
+        })
+    }
 }
