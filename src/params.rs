@@ -41,6 +41,9 @@ pub struct OscillatorParams {
 
     #[id = "enabled"]
     pub enabled: BoolParam,
+
+    #[id = "volume"]
+    pub volume: FloatParam,
 }
 
 impl Default for SynthParams {
@@ -126,6 +129,17 @@ impl OscillatorParams {
                 .with_step_size(0.01),
 
             enabled: BoolParam::new("Enabled", index == 0),
+
+            volume: FloatParam::new(
+                "Volume",
+                -0.01,
+                FloatRange::Linear {
+                    min: util::MINUS_INFINITY_DB,
+                    max: -0.01,
+                },
+            ).with_smoother(SmoothingStyle::Logarithmic(3.0))
+                .with_step_size(0.01)
+                .with_unit(" dB"),
         }
     }
 }

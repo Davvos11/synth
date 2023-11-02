@@ -5,7 +5,7 @@ use nih_plug_vizia::vizia::prelude::*;
 
 pub mod selector;
 pub mod fake_param_button;
-pub mod wave_controls;
+pub mod oscillator_controls;
 
 pub struct Controls {}
 

@@ -1,16 +1,16 @@
 use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::widgets::{ParamButton, ParamButtonExt, RawParamEvent};
+use nih_plug_vizia::widgets::{ParamButton, ParamButtonExt, ParamSlider, RawParamEvent};
 use crate::gui::controls::selector::{ButtonLabel, get_enum_name, Selector};
 use crate::gui::GuiData;
 use crate::gui::knob::{ParamKnob};
-use crate::gui::oscillator_controls::ControlEvent;
+use crate::gui::oscillator_control_list::ControlEvent;
 use crate::note::WaveKind;
 
-pub struct WaveControls {}
+pub struct OscillatorControls {}
 
-impl View for WaveControls {}
+impl View for OscillatorControls {}
 
-impl WaveControls {
+impl OscillatorControls {
     pub fn new(cx: &mut Context, i: usize) -> Handle<Self> {
         Self {}.build(cx, move |cx| {
             let display_pwm = GuiData::params
@@ -19,7 +19,10 @@ impl WaveControls {
             VStack::new(cx, move |cx| {
                 VStack::new(cx, move |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, &format!("Oscillator {i}"));
+                        // Label::new(cx, &format!("Oscillator {i}"));
+
+                        ParamSlider::new(cx, GuiData::params, move |p| &p.oscillator_params[i].volume)
+                            .width(Percentage(80.0));
 
                         ParamButtonWrapper::new(cx, |cx| {
                             ParamButton::new(cx, GuiData::params, move |p| &p.oscillator_params[i].enabled)
@@ -38,7 +41,8 @@ impl WaveControls {
 
                         Binding::new(cx, display_pwm, move |cx, display| {
                             if display.get(cx) {
-                                ParamKnob::new(cx, GuiData::params, move |p| &p.oscillator_params[i].pulse_width, true);
+                                ParamKnob::new(cx, GuiData::params, move |p| &p.oscillator_params[i].pulse_width,
+                                               true, Some("PW"));
                             }
                         });
                     }).child_space(Pixels(1.0))

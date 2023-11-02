@@ -3,8 +3,8 @@ use crate::OSCILLATOR_AMOUNT;
 use crate::params::get_oscillator_array;
 
 pub struct ParamCache {
-    pub(crate) wave_properties: [WaveProperties; OSCILLATOR_AMOUNT],
-    pub(crate) oscillator_enabled: [bool; OSCILLATOR_AMOUNT],
+    pub wave_properties: [WaveProperties; OSCILLATOR_AMOUNT],
+    pub oscillator_enabled: [bool; OSCILLATOR_AMOUNT],
 }
 
 impl Default for ParamCache {

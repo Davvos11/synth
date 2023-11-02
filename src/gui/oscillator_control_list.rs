@@ -1,12 +1,12 @@
 use nih_plug_vizia::vizia::prelude::*;
 use crate::gui::controls::fake_param_button::FakeParamButton;
-use crate::gui::controls::wave_controls::WaveControls;
+use crate::gui::controls::oscillator_controls::OscillatorControls;
 use crate::gui::GuiData;
 use crate::params::get_oscillator_array;
 
-pub struct OscillatorControls {}
+pub struct OscillatorControlList {}
 
-impl OscillatorControls {
+impl OscillatorControlList {
     pub fn new<L>(cx: &mut Context, lens: L) -> Handle<Self>
         where L: 'static + Lens<Target=bool>
     {
@@ -19,7 +19,7 @@ impl OscillatorControls {
 
                         Binding::new(cx, enabled, move |cx, enabled| {
                             if enabled.get(cx) {
-                                WaveControls::new(cx, i).width(Percentage(100.0));
+                                OscillatorControls::new(cx, i).width(Percentage(100.0));
                             }
                         });
                     }
@@ -41,7 +41,7 @@ impl OscillatorControls {
     }
 }
 
-impl View for OscillatorControls {}
+impl View for OscillatorControlList {}
 
 pub enum ControlEvent {
     AddOscillator,

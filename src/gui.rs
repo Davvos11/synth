@@ -9,13 +9,13 @@ use crate::gui::controls::Controls;
 use crate::gui::visualiser::Visualiser;
 use crate::SynthParams;
 use crate::process::visual_data::VisualData;
-use crate::gui::oscillator_controls::{ControlEvent, OscillatorControls};
+use crate::gui::oscillator_control_list::{ControlEvent, OscillatorControlList};
 
 mod controls;
 mod visualiser;
 mod grid;
 mod knob;
-mod oscillator_controls;
+mod oscillator_control_list;
 
 #[derive(Lens)]
 pub struct GuiData {
@@ -105,7 +105,7 @@ pub(crate) fn create(
                     .bottom(Pixels(20.0));
 
                 HStack::new(cx, |cx| {
-                    OscillatorControls::new(cx, l);
+                    OscillatorControlList::new(cx, l);
 
                     Controls::new(cx);
 

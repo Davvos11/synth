@@ -164,6 +164,7 @@ impl Synth {
             self.param_cache.wave_properties[i] = WaveProperties::new(
                 params.wave_kind.value(),
                 params.pulse_width.value(),
+                util::db_to_gain_fast(params.volume.value()),
             );
             self.param_cache.oscillator_enabled[i] = params.enabled.value();
         });

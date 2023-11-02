@@ -17,17 +17,19 @@ pub struct ParamKnob {
 }
 
 impl ParamKnob {
-    pub fn new<L, Params, P, FMap>(
+    pub fn new<L, Params, P, FMap, T>(
         cx: &mut Context,
         params: L,
         params_to_param: FMap,
         centered: bool,
+        override_title: Option<impl Res<T>>,
     ) -> Handle<Self>
         where
-            L: Lens<Target = Params> + Clone + Copy,
+            L: Lens<Target=Params> + Clone + Copy,
             Params: 'static,
             P: Param + 'static,
             FMap: Fn(&Params) -> &P + Copy + 'static,
+            T: ToString,
     {
         Self {
             param_base: ParamWidgetBase::new(cx, params, params_to_param),
@@ -91,11 +93,16 @@ impl ParamKnob {
                                 cx.emit(ParamEvent::EndSetParam);
                             });
 
-                        Label::new(
-                            cx,
-                            params.map(move |params| params_to_param(params).name().to_owned()),
-                        )
-                            .space(Stretch(1.0))
+                        ({
+                            match override_title {
+                                None => {
+                                    Label::new(cx, params.map(move |params| params_to_param(params).name().to_owned()))
+                                }
+                                Some(label) => {
+                                    Label::new(cx, label)
+                                }
+                            }
+                        }).space(Stretch(1.0))
                             .top(Stretch(0.));
                     })
                         .class("param_knob");

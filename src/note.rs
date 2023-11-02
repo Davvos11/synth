@@ -45,7 +45,6 @@ impl Note {
     pub fn finished(&self) -> bool {
         self.finished
     }
-
 }
 
 #[derive(nih_plug::prelude::Enum, PartialEq, Clone, Copy, Sequence)]
@@ -64,11 +63,16 @@ pub enum WaveKind {
 pub struct WaveProperties {
     kind: WaveKind,
     pulse_width: f32,
+    volume: f32,
 }
 
 impl WaveProperties {
-    pub fn new(kind: WaveKind, pulse_width: f32) -> Self {
-        Self { kind, pulse_width }
+    pub fn new(kind: WaveKind, pulse_width: f32, volume: f32) -> Self {
+        Self {
+            kind,
+            pulse_width,
+            volume
+        }
     }
 }
 
@@ -77,6 +81,7 @@ impl Default for WaveProperties {
         Self {
             kind: WaveKind::Sine,
             pulse_width: 0.5,
+            volume: 1.0,
         }
     }
 }
@@ -103,7 +108,7 @@ impl Wave {
     fn get_sample(&mut self) -> f32 {
         let enabled = self.enabled.load(Ordering::Relaxed);
         if !(enabled) {
-            return 0.0
+            return 0.0;
         }
 
         // Calculate the next step of the wave and phase
@@ -134,7 +139,7 @@ impl Wave {
             self.phase -= 1.0;
         }
 
-        // Return the sine value
-        wave
+        // Return the wave value, at the set volume
+        wave * properties.volume
     }
 }
