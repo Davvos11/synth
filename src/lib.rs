@@ -14,6 +14,8 @@ mod params;
 mod process;
 mod cache;
 
+/// The maximum amount of oscillators the synth can use
+pub const OSCILLATOR_AMOUNT: usize = 4;
 /// The time it takes for the peak meter to decay by 12 dB after switching to complete silence.
 const PEAK_METER_DECAY_MS: f64 = 150.0;
 
@@ -92,7 +94,7 @@ impl Plugin for Synth {
             as f32);
 
         // Load initial param data
-        self.get_wave_properties();
+        self.get_and_set_oscillator_params();
         true
     }
 
@@ -101,11 +103,11 @@ impl Plugin for Synth {
             // Get ui parameters
             let volume = self.params.volume.smoothed.next();
             let adsr = self.get_adsr();
-            self.get_wave_properties();
+            self.get_and_set_oscillator_params();
 
             // Update parameters of notes that are playing
             self.notes.update_adsr(adsr);
-            self.notes.update_wave_properties(&self.param_cache.wave_properties);
+            self.notes.update(&self.param_cache);
 
             // Process midi (modifies `self.notes` and `self.released_notes`)
             let mut next_event = context.next_event();
@@ -157,12 +159,13 @@ impl Synth {
         )
     }
 
-    fn get_wave_properties(&mut self) {
+    fn get_and_set_oscillator_params(&mut self) {
         self.params.oscillator_params.iter().enumerate().for_each(|(i, params)| {
             self.param_cache.wave_properties[i] = WaveProperties::new(
                 params.wave_kind.value(),
                 params.pulse_width.value(),
             );
+            self.param_cache.oscillator_enabled[i] = params.enabled.value();
         });
     }
 }

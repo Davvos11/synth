@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use nih_plug::editor::Editor;
+use nih_plug::prelude::{GuiContext, ParamSetter};
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::{ParamSlider, ResizeHandle};
@@ -7,21 +9,60 @@ use crate::gui::controls::Controls;
 use crate::gui::visualiser::Visualiser;
 use crate::SynthParams;
 use crate::process::visual_data::VisualData;
-use crate::gui::controls::wave_controls::WaveControls;
-use crate::params::get_oscillator_array;
+use crate::gui::oscillator_controls::{ControlEvent, OscillatorControls};
 
 mod controls;
 mod visualiser;
 mod grid;
 mod knob;
+mod oscillator_controls;
 
 #[derive(Lens)]
 pub struct GuiData {
     params: Arc<SynthParams>,
     visual_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
+    gui_context: Arc<dyn GuiContext>,
+    max_oscillators: Arc<AtomicBool>,
 }
 
-impl Model for GuiData {}
+impl Model for GuiData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        let setter = ParamSetter::new(self.gui_context.as_ref());
+
+        event.map(|control_event: &ControlEvent, _meta| match control_event {
+            ControlEvent::AddOscillator => {
+                let mut all_enabled = true;
+                let mut set = false;
+                // Loop over oscillators, setting the first that is disabled
+                // and checking if all have been enabled or not
+                for param in &self.params.oscillator_params {
+                    // Find first oscillator that is disabled
+                    if !param.enabled.value() {
+                        if set {
+                            all_enabled = false;
+                            break;
+                        }
+                        // Enable
+                        setter.begin_set_parameter(&param.enabled);
+                        setter.set_parameter(&param.enabled, true);
+                        setter.end_set_parameter(&param.enabled);
+                        // Go to next loop
+                        set = true;
+                        continue
+                    }
+                }
+
+                if all_enabled {
+                    self.max_oscillators.store(true, Ordering::Relaxed);
+                }
+            }
+            ControlEvent::RemoveOscillator => {
+                self.max_oscillators.store(false, Ordering::Relaxed);
+            }
+        });
+
+    }
+}
 
 pub(crate) fn default_state() -> Arc<ViziaState> {
     ViziaState::new(|| (700, 350))
@@ -35,7 +76,7 @@ pub(crate) fn create(
     create_vizia_editor(
         editor_state,
         ViziaTheming::Custom,
-        move |cx, _| {
+        move |cx, gui_cx| {
             assets::register_noto_sans_light(cx);
             assets::register_noto_sans_thin(cx);
 
@@ -44,7 +85,13 @@ pub(crate) fn create(
             GuiData {
                 params: params.clone(),
                 visual_data: visual_data.clone(),
+                gui_context: gui_cx,
+                max_oscillators: Arc::new(AtomicBool::new(false)),
             }.build(cx);
+
+            let l = GuiData::max_oscillators.map(|m|{
+                m.load(Ordering::Relaxed)
+            });
 
             ResizeHandle::new(cx);
 
@@ -58,13 +105,7 @@ pub(crate) fn create(
                     .bottom(Pixels(20.0));
 
                 HStack::new(cx, |cx| {
-                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                        VStack::new(cx, |cx| {
-                            for i in get_oscillator_array() {
-                                WaveControls::new(cx, i).width(Percentage(100.0));
-                            }
-                        }).row_between(Pixels(10.0));
-                    }).height(Stretch(1.0)).width(Pixels(200.0));
+                    OscillatorControls::new(cx, l);
 
                     Controls::new(cx);
 
@@ -84,3 +125,4 @@ pub(crate) fn create(
                 .child_top(Pixels(0.0));
         })
 }
+

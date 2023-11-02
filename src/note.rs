@@ -1,5 +1,6 @@
 use std::f32::consts;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use enum_iterator::Sequence;
 use nih_plug::prelude::Enum;
 pub use crate::note::envelope::Adsr;
@@ -85,19 +86,26 @@ pub struct Wave {
     frequency: f32,
     sample_rate: f32,
     properties: Arc<Mutex<WaveProperties>>,
+    enabled: Arc<AtomicBool>,
 }
 
 impl Wave {
-    pub fn new(frequency: f32, properties: Arc<Mutex<WaveProperties>>, sample_rate: f32) -> Self {
+    pub fn new(frequency: f32, properties: Arc<Mutex<WaveProperties>>, sample_rate: f32, enabled: Arc<AtomicBool>) -> Self {
         Self {
             frequency,
             phase: 0.0,
             sample_rate,
             properties,
+            enabled,
         }
     }
 
     fn get_sample(&mut self) -> f32 {
+        let enabled = self.enabled.load(Ordering::Relaxed);
+        if !(enabled) {
+            return 0.0
+        }
+
         // Calculate the next step of the wave and phase
         let phase_delta = self.frequency / self.sample_rate;
 

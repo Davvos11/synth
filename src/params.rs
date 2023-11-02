@@ -1,10 +1,8 @@
 use std::sync::Arc;
 use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
-use crate::gui;
+use crate::{gui, OSCILLATOR_AMOUNT};
 use crate::note::WaveKind;
-
-pub const OSCILLATOR_AMOUNT: usize = 4;
 
 pub fn get_oscillator_array() -> [usize; OSCILLATOR_AMOUNT] {
     (0..OSCILLATOR_AMOUNT).map(|x| x as usize).collect::<Vec<usize>>().try_into().unwrap()
@@ -40,6 +38,9 @@ pub struct OscillatorParams {
 
     #[id = "pwm"]
     pub pulse_width: FloatParam,
+
+    #[id = "enabled"]
+    pub enabled: BoolParam,
 }
 
 impl Default for SynthParams {
@@ -123,6 +124,8 @@ impl OscillatorParams {
                 }
             ).with_smoother(SmoothingStyle::Linear(1.0))
                 .with_step_size(0.01),
+
+            enabled: BoolParam::new("Enabled", index == 0),
         }
     }
 }

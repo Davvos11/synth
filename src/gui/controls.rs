@@ -3,7 +3,8 @@ use nih_plug_vizia::widgets::ParamSlider;
 use crate::gui::GuiData;
 use nih_plug_vizia::vizia::prelude::*;
 
-mod selector;
+pub mod selector;
+pub mod fake_param_button;
 pub mod wave_controls;
 
 pub struct Controls {}
