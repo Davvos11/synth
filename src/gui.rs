@@ -8,6 +8,7 @@ use crate::gui::visualiser::Visualiser;
 use crate::SynthParams;
 use crate::process::visual_data::VisualData;
 use crate::gui::controls::wave_controls::WaveControls;
+use crate::params::get_oscillator_array;
 
 mod controls;
 mod visualiser;
@@ -57,7 +58,13 @@ pub(crate) fn create(
                     .bottom(Pixels(20.0));
 
                 HStack::new(cx, |cx| {
-                    WaveControls::new(cx).width(Pixels(180.0));
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        VStack::new(cx, |cx| {
+                            for i in get_oscillator_array() {
+                                WaveControls::new(cx, i).width(Percentage(100.0));
+                            }
+                        }).row_between(Pixels(10.0));
+                    }).height(Stretch(1.0)).width(Pixels(200.0));
 
                     Controls::new(cx);
 

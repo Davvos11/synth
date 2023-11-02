@@ -4,6 +4,12 @@ use nih_plug_vizia::ViziaState;
 use crate::gui;
 use crate::note::WaveKind;
 
+pub const OSCILLATOR_AMOUNT: usize = 4;
+
+pub fn get_oscillator_array() -> [usize; OSCILLATOR_AMOUNT] {
+    (0..OSCILLATOR_AMOUNT).map(|x| x as usize).collect::<Vec<usize>>().try_into().unwrap()
+}
+
 #[derive(Params)]
 pub struct SynthParams {
     /// The editor state, saved together with the parameter state so the custom scaling can be
@@ -23,6 +29,12 @@ pub struct SynthParams {
     #[id = "release"]
     pub release: FloatParam,
 
+    #[nested(array, group = "Oscillator Parameters")]
+    pub oscillator_params: [OscillatorParams; OSCILLATOR_AMOUNT],
+}
+
+#[derive(Params)]
+pub struct OscillatorParams {
     #[id = "wave_kind"]
     pub wave_kind: EnumParam<WaveKind>,
 
@@ -90,10 +102,20 @@ impl Default for SynthParams {
                 .with_step_size(0.01)
                 .with_unit("sec"),
 
-            wave_kind: EnumParam::new("Wave",  WaveKind::Triangle),
+            oscillator_params: get_oscillator_array().map(|i| {
+                OscillatorParams::new(i)
+            })
+        }
+    }
+}
+
+impl OscillatorParams {
+    fn new(index: usize) -> Self {
+        Self {
+            wave_kind: EnumParam::new(format!("Wave {index}"),  WaveKind::Triangle),
 
             pulse_width: FloatParam::new(
-                "PW",
+                format!("PW {index}"),
                 0.5,
                 FloatRange::Linear {
                     min: 0.0,
@@ -102,5 +124,11 @@ impl Default for SynthParams {
             ).with_smoother(SmoothingStyle::Linear(1.0))
                 .with_step_size(0.01),
         }
+    }
+}
+
+impl Default for OscillatorParams {
+    fn default() -> Self {
+        Self::new(0)
     }
 }

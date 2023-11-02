@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use triple_buffer::TripleBuffer;
+use crate::cache::ParamCache;
 use crate::note::{Adsr, WaveProperties};
 use crate::params::SynthParams;
 use crate::process::notes::NoteStorage;
@@ -11,6 +12,7 @@ mod note;
 mod fixed_map;
 mod params;
 mod process;
+mod cache;
 
 /// The time it takes for the peak meter to decay by 12 dB after switching to complete silence.
 const PEAK_METER_DECAY_MS: f64 = 150.0;
@@ -21,7 +23,9 @@ pub struct Synth {
     notes: NoteStorage,
     data: SynthData,
     visual_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
+    param_cache: ParamCache,
 }
+
 
 impl Default for Synth {
     fn default() -> Self {
@@ -33,6 +37,7 @@ impl Default for Synth {
             notes: NoteStorage::new(),
             data: SynthData::new(synth_data_input),
             visual_data: Arc::new(Mutex::new(synth_data_output)),
+            param_cache: ParamCache::default(),
         }
     }
 }
@@ -86,6 +91,8 @@ impl Plugin for Synth {
             .powf((buffer_config.sample_rate as f64 * PEAK_METER_DECAY_MS / 1000.0).recip())
             as f32);
 
+        // Load initial param data
+        self.get_wave_properties();
         true
     }
 
@@ -94,14 +101,11 @@ impl Plugin for Synth {
             // Get ui parameters
             let volume = self.params.volume.smoothed.next();
             let adsr = self.get_adsr();
-            let wave_properties = WaveProperties::new(
-                self.params.wave_kind.value(),
-                self.params.pulse_width.value(),
-            );
+            self.get_wave_properties();
 
             // Update parameters of notes that are playing
             self.notes.update_adsr(adsr);
-            self.notes.update_wave_properties(wave_properties);
+            self.notes.update_wave_properties(&self.param_cache.wave_properties);
 
             // Process midi (modifies `self.notes` and `self.released_notes`)
             let mut next_event = context.next_event();
@@ -151,6 +155,15 @@ impl Synth {
             util::db_to_gain_fast(self.params.sustain.smoothed.next()),
             self.params.release.smoothed.next(),
         )
+    }
+
+    fn get_wave_properties(&mut self) {
+        self.params.oscillator_params.iter().enumerate().for_each(|(i, params)| {
+            self.param_cache.wave_properties[i] = WaveProperties::new(
+                params.wave_kind.value(),
+                params.pulse_width.value(),
+            );
+        });
     }
 }
 

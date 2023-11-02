@@ -9,22 +9,23 @@ pub struct WaveControls {}
 impl View for WaveControls {}
 
 impl WaveControls {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self{}.build(cx, |cx| {
+    pub fn new(cx: &mut Context, i: usize) -> Handle<Self> {
+        Self{}.build(cx, move |cx| {
             let display_pwm = GuiData::params
-                .map(|p| p.wave_kind.value() == WaveKind::Square);
+                .map(move |p| p.oscillator_params[i].wave_kind.value() == WaveKind::Square);
 
-            VStack::new(cx, |cx| {
-                VStack::new(cx, |cx| {
+            VStack::new(cx, move |cx| {
+                VStack::new(cx, move |cx| {
                     Label::new(cx, "Wave").bottom(Pixels(5.0));
 
-                    HStack::new(cx, |cx| {
-                        Selector::new(cx, GuiData::params, |p| &p.wave_kind,
+                    HStack::new(cx, move |cx| {
+                        Selector::new(cx, GuiData::params, move |p| &p.oscillator_params[i].wave_kind,
                                       |v| ButtonLabel::Text(get_enum_name(v)),
                         );
-                        Binding::new(cx, display_pwm, |cx, display| {
+
+                        Binding::new(cx, display_pwm, move |cx, display| {
                             if display.get(cx) {
-                                ParamKnob::new(cx, GuiData::params, |p| &p.pulse_width, true);
+                                ParamKnob::new(cx, GuiData::params, move |p| &p.oscillator_params[i].pulse_width, true);
                             }
                         });
                     }).child_space(Pixels(1.0))

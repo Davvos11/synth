@@ -59,6 +59,7 @@ pub enum WaveKind {
     Square,
 }
 
+#[derive(Clone)]
 pub struct WaveProperties {
     kind: WaveKind,
     pulse_width: f32,

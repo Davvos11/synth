@@ -10,10 +10,13 @@ Mainly created to learn about writing Synthesizers.
 - [x] Visualisation
   - [ ] Improve visualisation
 - [x] Other oscillator waves
-- [ ] Oscillator parameters
-- [ ] Multiple oscillators
-- [ ] Filters
+- [x] Oscillator parameters
+- [x] Multiple oscillators
 - [ ] Modulation
+  - [ ] Multiple ADSR curves
+  - [ ] Modulate "any" parameter
+  - [ ] LFOs
+- [ ] Filters
 
 ## Run
 Run standalone using:
