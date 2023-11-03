@@ -60,9 +60,10 @@ impl Default for SynthParams {
             volume: FloatParam::new(
                 "Volume",
                 -10.0,
-                FloatRange::Linear {
-                    min: -30.0,
+                FloatRange::Skewed {
+                    min: util::MINUS_INFINITY_DB,
                     max: -0.01,
+                    factor: FloatRange::skew_factor(1.0),
                 },
             ).with_smoother(SmoothingStyle::Logarithmic(3.0))
                 .with_step_size(0.01)
@@ -71,9 +72,10 @@ impl Default for SynthParams {
             attack: FloatParam::new(
                 "Attack",
                 0.01,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 0.01,
                     max: 10.0,
+                    factor: FloatRange::skew_factor(-1.0),
                 },
             ).with_smoother(SmoothingStyle::Linear(3.0))
                 .with_step_size(0.01)
@@ -82,9 +84,10 @@ impl Default for SynthParams {
             decay: FloatParam::new(
                 "Decay",
                 0.2,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 0.01,
                     max: 10.0,
+                    factor: FloatRange::skew_factor(-1.0),
                 },
             ).with_smoother(SmoothingStyle::Linear(3.0))
                 .with_step_size(0.01)
@@ -93,9 +96,10 @@ impl Default for SynthParams {
             sustain: FloatParam::new(
                 "Sustain",
                 -10.0,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: util::MINUS_INFINITY_DB,
                     max: -0.01,
+                    factor: FloatRange::skew_factor(1.0),
                 },
             ).with_smoother(SmoothingStyle::Logarithmic(3.0))
                 .with_step_size(0.01)
@@ -104,9 +108,10 @@ impl Default for SynthParams {
             release: FloatParam::new(
                 "Release",
                 0.2,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 0.01,
                     max: 10.0,
+                    factor: FloatRange::skew_factor(-1.0),
                 },
             ).with_smoother(SmoothingStyle::Linear(3.0))
                 .with_step_size(0.01)
@@ -139,9 +144,10 @@ impl OscillatorParams {
             volume: FloatParam::new(
                 format!("OSC{index} Volume"),
                 -0.01,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: util::MINUS_INFINITY_DB,
                     max: -0.01,
+                    factor: FloatRange::skew_factor(1.0),
                 },
             ).with_smoother(SmoothingStyle::Logarithmic(3.0))
                 .with_step_size(0.01)
