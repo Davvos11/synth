@@ -1,8 +1,8 @@
 use std::f32::consts;
 use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
 use enum_iterator::Sequence;
 use nih_plug::prelude::Enum;
+use nih_plug::util;
 pub use crate::note::envelope::Adsr;
 use crate::note::envelope::Envelope;
 
@@ -10,18 +10,18 @@ mod envelope;
 
 
 pub struct Note {
-    wave: Wave,
+    oscillator: Oscillator,
     envelope: Envelope,
     finished: bool,
     velocity: f32,
 }
 
 impl Note {
-    pub fn new(wave: Wave, adsr: Arc<Mutex<Adsr>>, velocity: f32) -> Self {
-        let sample_rate = wave.sample_rate;
+    pub fn new(oscillator: Oscillator, adsr: Arc<Mutex<Adsr>>, velocity: f32) -> Self {
+        let sample_rate = oscillator.sample_rate;
 
         Self {
-            wave,
+            oscillator,
             envelope: Envelope::new(adsr, sample_rate),
             finished: false,
             velocity,
@@ -30,7 +30,7 @@ impl Note {
 
     pub fn get_sample(&mut self) -> f32 {
         // Get wave value
-        let wave = self.wave.get_sample();
+        let wave = self.oscillator.get_sample();
         // Get envelope factor
         let (env, finished) = self.envelope.get_gain();
 
@@ -60,62 +60,77 @@ pub enum WaveKind {
 }
 
 #[derive(Clone)]
-pub struct WaveProperties {
+pub struct OscillatorProperties {
     kind: WaveKind,
     pulse_width: f32,
     volume: f32,
+    enabled: bool,
+    transpose: i32,
+    detune: f32,
 }
 
-impl WaveProperties {
-    pub fn new(kind: WaveKind, pulse_width: f32, volume: f32) -> Self {
+impl OscillatorProperties {
+    pub fn new(kind: WaveKind, pulse_width: f32, volume: f32, enabled: bool,
+               transpose: i32, detune: f32,
+    ) -> Self {
         Self {
             kind,
             pulse_width,
-            volume
+            volume,
+            enabled,
+            transpose,
+            detune,
         }
     }
 }
 
-impl Default for WaveProperties {
+impl Default for OscillatorProperties {
     fn default() -> Self {
         Self {
             kind: WaveKind::Sine,
             pulse_width: 0.5,
             volume: 1.0,
+            enabled: true,
+            transpose: 0,
+            detune: 0.0,
         }
     }
 }
 
-pub struct Wave {
+pub struct Oscillator {
     phase: f32,
-    frequency: f32,
+    midi_note: u8,
     sample_rate: f32,
-    properties: Arc<Mutex<WaveProperties>>,
-    enabled: Arc<AtomicBool>,
+    properties: Arc<Mutex<OscillatorProperties>>,
 }
 
-impl Wave {
-    pub fn new(frequency: f32, properties: Arc<Mutex<WaveProperties>>, sample_rate: f32, enabled: Arc<AtomicBool>) -> Self {
+impl Oscillator {
+    pub fn new(midi_note: u8, properties: Arc<Mutex<OscillatorProperties>>, sample_rate: f32) -> Self {
         Self {
-            frequency,
+            midi_note,
             phase: 0.0,
             sample_rate,
             properties,
-            enabled,
         }
     }
 
     fn get_sample(&mut self) -> f32 {
-        let enabled = self.enabled.load(Ordering::Relaxed);
-        if !(enabled) {
+        // Get the oscillator properties
+        let properties = self.properties.lock().expect("Failed to acquire oscillator_properties lock");
+
+        if !properties.enabled {
             return 0.0;
         }
 
+        // Calculate the frequency
+        let frequency =
+            util::f32_midi_note_to_freq(
+                self.midi_note as f32 +
+                    properties.transpose as f32 +
+                    (properties.detune / 100.0)
+            );
         // Calculate the next step of the wave and phase
-        let phase_delta = self.frequency / self.sample_rate;
-
-        // Get the wave properties
-        let properties = self.properties.lock().expect("Failed to acquire wave_kind lock");
+        let phase_delta = frequency / self.sample_rate;
 
 
         let wave = match properties.kind {

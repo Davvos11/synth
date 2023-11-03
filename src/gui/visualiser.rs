@@ -1,7 +1,7 @@
 use std::time::Duration;
 use nih_plug::util;
 use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::widgets::PeakMeter;
+use nih_plug_vizia::widgets::{ParamSlider, PeakMeter};
 use crate::gui::GuiData;
 use crate::gui::visualiser::scope::Scope;
 
@@ -20,17 +20,30 @@ impl Visualiser {
 
 
             VStack::new(cx, |cx| {
-                PeakMeter::new(
-                    cx,
-                    visual_data_lens.clone().map(
-                        |d| util::gain_to_db_fast(d.peak_meter)
-                    ),
-                    Some(Duration::from_millis(600)),
-                );
+                VStack::new(cx, |cx| {
+                    Label::new(cx, "Volume");
+                    ParamSlider::new(cx, GuiData::params, |params| &params.volume);
 
-                Scope::new(cx, visual_data_lens.clone());
+                    PeakMeter::new(
+                        cx,
+                        visual_data_lens.clone().map(
+                            |d| util::gain_to_db_fast(d.peak_meter)
+                        ),
+                        Some(Duration::from_millis(600)),
+                    );
+                })
+                    .row_between(Pixels(0.0))
+                    .child_left(Stretch(1.0))
+                    .child_right(Stretch(1.0));
 
-            }).row_between(Pixels(15.0));
+                Scope::new(cx, visual_data_lens.clone())
+                    .height(Pixels(200.0));
+
+                VStack::new(cx, |_cx| {
+
+                });
+            })
+                .row_between(Pixels(0.0));
         })
     }
 }

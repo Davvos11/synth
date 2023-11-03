@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use triple_buffer::TripleBuffer;
 use crate::cache::ParamCache;
-use crate::note::{Adsr, WaveProperties};
+use crate::note::{Adsr, OscillatorProperties};
 use crate::params::SynthParams;
 use crate::process::notes::NoteStorage;
 use crate::process::visual_data::{SynthData, VisualData};
@@ -161,12 +161,14 @@ impl Synth {
 
     fn get_and_set_oscillator_params(&mut self) {
         self.params.oscillator_params.iter().enumerate().for_each(|(i, params)| {
-            self.param_cache.wave_properties[i] = WaveProperties::new(
+            self.param_cache.oscillator_properties[i] = OscillatorProperties::new(
                 params.wave_kind.value(),
-                params.pulse_width.value(),
-                util::db_to_gain_fast(params.volume.value()),
+                params.pulse_width.smoothed.next(),
+                util::db_to_gain_fast(params.volume.smoothed.next()),
+                params.enabled.value(),
+                params.transpose.value(),
+                params.detune.value(),
             );
-            self.param_cache.oscillator_enabled[i] = params.enabled.value();
         });
     }
 }

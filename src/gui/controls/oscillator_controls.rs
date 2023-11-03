@@ -1,5 +1,5 @@
 use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::widgets::{ParamButton, ParamButtonExt, ParamSlider, RawParamEvent};
+use nih_plug_vizia::widgets::{ParamButton, ParamButtonExt, RawParamEvent};
 use crate::gui::controls::selector::{ButtonLabel, get_enum_name, Selector};
 use crate::gui::GuiData;
 use crate::gui::knob::{ParamKnob};
@@ -20,9 +20,9 @@ impl OscillatorControls {
                 VStack::new(cx, move |cx| {
                     HStack::new(cx, |cx| {
                         // Label::new(cx, &format!("Oscillator {i}"));
-
-                        ParamSlider::new(cx, GuiData::params, move |p| &p.oscillator_params[i].volume)
-                            .width(Percentage(80.0));
+                        Selector::new(cx, GuiData::params, move |p| &p.oscillator_params[i].wave_kind,
+                                      |v| ButtonLabel::Text(get_enum_name(v)),
+                        );
 
                         ParamButtonWrapper::new(cx, |cx| {
                             ParamButton::new(cx, GuiData::params, move |p| &p.oscillator_params[i].enabled)
@@ -35,18 +35,31 @@ impl OscillatorControls {
                         .bottom(Pixels(5.0));
 
                     HStack::new(cx, move |cx| {
-                        Selector::new(cx, GuiData::params, move |p| &p.oscillator_params[i].wave_kind,
-                                      |v| ButtonLabel::Text(get_enum_name(v)),
-                        );
+                        ParamKnob::new(cx, GuiData::params, move |p| &p.oscillator_params[i].volume,
+                                       false, Some("Volume"), false);
 
+                        ParamKnob::new(cx, GuiData::params, move |p| &p.oscillator_params[i].transpose,
+                                       true, Some("Transpose"), false);
+
+                        ParamKnob::new(cx, GuiData::params, move |p| &p.oscillator_params[i].detune,
+                                       true, Some("Detune"), false);
+                    })
+                        .class("osc-buttons")
+                        .child_space(Pixels(1.0))
+                        .col_between(Pixels(5.0));
+
+                    HStack::new(cx, move |cx| {
                         Binding::new(cx, display_pwm, move |cx, display| {
                             if display.get(cx) {
                                 ParamKnob::new(cx, GuiData::params, move |p| &p.oscillator_params[i].pulse_width,
-                                               true, Some("PW"));
+                                               true, Some("PW"), false);
                             }
                         });
-                    }).child_space(Pixels(1.0))
+                    })
+                        .class("osc-buttons")
+                        .child_space(Pixels(1.0))
                         .col_between(Pixels(5.0));
+
                 })
                     .row_between(Pixels(0.0))
                     .child_left(Stretch(1.0))

@@ -23,6 +23,7 @@ impl ParamKnob {
         params_to_param: FMap,
         centered: bool,
         override_title: Option<impl Res<T>>,
+        include_unit: bool,
     ) -> Handle<Self>
         where
             L: Lens<Target=Params> + Clone + Copy,
@@ -74,7 +75,7 @@ impl ParamKnob {
                                                 params_to_param(params)
                                                     .modulated_normalized_value()
                                                     .to_owned(),
-                                                true,
+                                                include_unit,
                                             )
                                             .to_owned()
                                     }),

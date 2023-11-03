@@ -35,7 +35,7 @@ impl OscillatorControlList {
                         }
                     });
 
-                }).row_between(Pixels(10.0));
+                }).row_between(Pixels(10.0)).width(Percentage(90.0));
             }).height(Stretch(1.0)).width(Pixels(210.0));
         })
     }

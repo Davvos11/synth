@@ -4,7 +4,7 @@ use nih_plug::editor::Editor;
 use nih_plug::prelude::{GuiContext, ParamSetter};
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::widgets::{ParamSlider, ResizeHandle};
+use nih_plug_vizia::widgets::ResizeHandle;
 use crate::gui::controls::Controls;
 use crate::gui::visualiser::Visualiser;
 use crate::SynthParams;
@@ -65,7 +65,7 @@ impl Model for GuiData {
 }
 
 pub(crate) fn default_state() -> Arc<ViziaState> {
-    ViziaState::new(|| (700, 350))
+    ViziaState::new(|| (700, 550))
 }
 
 pub(crate) fn create(
@@ -109,14 +109,7 @@ pub(crate) fn create(
 
                     Controls::new(cx);
 
-                    VStack::new(cx, |cx| {
-                        Label::new(cx, "Volume");
-                        ParamSlider::new(cx, GuiData::params, |params| &params.volume);
-
-                        Visualiser::new(cx);
-                    }).row_between(Pixels(0.0))
-                        .child_left(Stretch(1.0))
-                        .child_right(Stretch(1.0));
+                    Visualiser::new(cx);
                 }).col_between(Pixels(20.0));
             }).child_space(Stretch(1.0))
                 .top(Pixels(10.0))

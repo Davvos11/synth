@@ -10,10 +10,15 @@ knob .track {
 knob label {
     child-space: 1s;
     color: white;
+    font-size: 12px;
 }
 
 knob .tick {
     background-color: #696969;
+}
+
+.param_knob > label {
+    font-size: 12px;
 }
 
 param-selector param-button {

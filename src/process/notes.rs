@@ -1,9 +1,8 @@
 use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
 use nih_plug::prelude::*;
 use crate::cache::ParamCache;
 use crate::fixed_map::FixedMap;
-use crate::note::{Adsr, Note, Wave, WaveProperties};
+use crate::note::{Adsr, Note, Oscillator, OscillatorProperties};
 use crate::params::get_oscillator_array;
 use crate::{OSCILLATOR_AMOUNT, Synth};
 
@@ -11,9 +10,8 @@ pub struct NoteStorage {
     notes: FixedMap<u8, [Note; OSCILLATOR_AMOUNT]>,
     released_notes: Vec<Note>,
 
-    wave_properties: [Arc<Mutex<WaveProperties>>; OSCILLATOR_AMOUNT],
+    oscillator_properties: [Arc<Mutex<OscillatorProperties>>; OSCILLATOR_AMOUNT],
     adsr: Arc<Mutex<Adsr>>,
-    oscillator_enabled: [Arc<AtomicBool>; OSCILLATOR_AMOUNT],
 
     oscillator_range: [usize; OSCILLATOR_AMOUNT],
 }
@@ -25,9 +23,8 @@ impl NoteStorage {
         Self {
             notes: FixedMap::new(64),
             released_notes: Vec::with_capacity(64 * OSCILLATOR_AMOUNT),
-            wave_properties: oscillator_range.map(|_| Arc::new(Mutex::new(WaveProperties::default()))),
+            oscillator_properties: oscillator_range.map(|_| Arc::new(Mutex::new(OscillatorProperties::default()))),
             adsr: Arc::new(Mutex::new(Adsr::default())),
-            oscillator_enabled: oscillator_range.map(|_| Arc::new(AtomicBool::new(false))),
             oscillator_range
         }
     }
@@ -43,10 +40,9 @@ impl NoteStorage {
                 let new_notes =
                     self.oscillator_range.map(|i| {
                         Note::new(
-                            Wave::new(util::midi_note_to_freq(note),
-                                      self.wave_properties[i].clone(),
-                                      sample_rate,
-                                self.oscillator_enabled[i].clone(),
+                            Oscillator::new(note,
+                                            self.oscillator_properties[i].clone(),
+                                            sample_rate,
                             ),
                             self.adsr.clone(),
                             velocity,
@@ -104,8 +100,7 @@ impl NoteStorage {
 
     pub fn update(&mut self, params: &ParamCache) {
         for i in 0..OSCILLATOR_AMOUNT {
-            *self.wave_properties[i].lock().unwrap() = params.wave_properties[i].clone();
-            self.oscillator_enabled[i].store(params.oscillator_enabled[i], Ordering::Relaxed);
+            *self.oscillator_properties[i].lock().unwrap() = params.oscillator_properties[i].clone();
         }
     }
 }
