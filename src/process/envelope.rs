@@ -1,22 +1,36 @@
 use std::sync::{Arc, Mutex};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Adsr {
     attack: f32,
-    delay: f32,
+    decay: f32,
     sustain: f32,
     release: f32,
 }
 
 impl Adsr {
-    pub fn new(attack: f32, delay: f32, sustain: f32, release: f32) -> Self {
-        Self { attack, delay, sustain, release }
+    pub fn new(attack: f32, decay: f32, sustain: f32, release: f32) -> Self {
+        Self { attack, decay, sustain, release }
+    }
+
+
+    pub fn attack(&self) -> f32 {
+        self.attack
+    }
+    pub fn decay(&self) -> f32 {
+        self.decay
+    }
+    pub fn sustain(&self) -> f32 {
+        self.sustain
+    }
+    pub fn release(&self) -> f32 {
+        self.release
     }
 }
 
 impl Default for Adsr {
     fn default() -> Self {
-        Self {attack: 0.01, delay: 0.0, sustain: 1.0, release: 0.01}
+        Self {attack: 0.01, decay: 0.0, sustain: 1.0, release: 0.01}
     }
 }
 
@@ -63,10 +77,10 @@ impl Envelope {
                 if self.time < adsr.attack {
                     // Attack phase
                     self.time / adsr.attack
-                } else if self.time < adsr.attack + adsr.delay {
+                } else if self.time < adsr.attack + adsr.decay {
                     // Attack -> sustain phase
                     1.0 -
-                        (self.time - adsr.attack) / adsr.delay *
+                        (self.time - adsr.attack) / adsr.decay *
                             (1.0 - adsr.sustain)
                 } else {
                     adsr.sustain

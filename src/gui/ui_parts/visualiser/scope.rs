@@ -37,7 +37,10 @@ impl<L> View for Scope<L>
         let mut outline = vg::Path::new();
         outline.rect(bounds.x, bounds.y, bounds.w, bounds.h);
         // TODO get color from context instead of putting black
-        canvas.stroke_path(&mut outline, &vg::Paint::color(Color::black().into()));
+        let mut paint = Paint::color(Color::black().into());
+        paint.set_line_width(1.0);
+        paint.set_anti_alias(false);
+        canvas.stroke_path(&mut outline, &paint);
 
         // Draw the waveform
         let visual_data = self.visual_data.get(cx);

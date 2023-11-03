@@ -9,7 +9,7 @@ Mainly created to learn about writing Synthesizers.
 - [x] ADSR
 - [x] Visualisation
   - [x] Audio scope
-  - [ ] ADSR graph
+  - [x] ADSR graph
   - [ ] Parameter modulation
   - [ ] LFO scope
 - [x] Other oscillator waves
