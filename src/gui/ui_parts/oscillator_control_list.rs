@@ -2,7 +2,7 @@ use nih_plug_vizia::vizia::prelude::*;
 use crate::gui::components::fake_param_button::FakeParamButton;
 use crate::gui::GuiData;
 use crate::gui::ui_parts::oscillator_control_list::oscillator_controls::OscillatorControls;
-use crate::params::get_oscillator_array;
+use crate::utils::get_oscillator_array;
 
 pub mod oscillator_controls;
 

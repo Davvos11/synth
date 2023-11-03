@@ -3,10 +3,7 @@ use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
 use crate::{gui, OSCILLATOR_AMOUNT};
 use crate::process::note::WaveKind;
-
-pub fn get_oscillator_array() -> [usize; OSCILLATOR_AMOUNT] {
-    (0..OSCILLATOR_AMOUNT).map(|x| x as usize).collect::<Vec<usize>>().try_into().unwrap()
-}
+use crate::utils::get_oscillator_array;
 
 #[derive(Params)]
 pub struct SynthParams {

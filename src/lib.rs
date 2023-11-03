@@ -15,6 +15,8 @@ mod utils;
 
 /// The maximum amount of oscillators the synth can use
 pub const OSCILLATOR_AMOUNT: usize = 4;
+/// The maximum amount of envelopes the synth can use
+pub const ENVELOPE_AMOUNT: usize = 4;
 /// The time it takes for the peak meter to decay by 12 dB after switching to complete silence.
 const PEAK_METER_DECAY_MS: f64 = 150.0;
 
