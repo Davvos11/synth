@@ -1,32 +1,35 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
-use crate::utils::cache::ParamCache;
 use crate::utils::fixed_map::FixedMap;
-use crate::{OSCILLATOR_AMOUNT, Synth};
-use crate::process::envelope::Adsr;
+use crate::{ENVELOPE_AMOUNT, OSCILLATOR_AMOUNT, Synth};
+use crate::params::SynthParams;
+use crate::process::envelope::{Adsr, EnvelopeProperties};
 use crate::process::note::{Note, Oscillator, OscillatorProperties};
-use crate::utils::get_oscillator_array;
+use crate::utils::{get_envelope_array, get_oscillator_array};
 
 pub struct NoteStorage {
     notes: FixedMap<u8, [Note; OSCILLATOR_AMOUNT]>,
     released_notes: Vec<Note>,
 
     oscillator_properties: [Arc<Mutex<OscillatorProperties>>; OSCILLATOR_AMOUNT],
-    adsr: Arc<Mutex<Adsr>>,
+    envelope_properties: [Arc<Mutex<EnvelopeProperties>>; ENVELOPE_AMOUNT],
 
     oscillator_range: [usize; OSCILLATOR_AMOUNT],
+    envelope_range: [usize; ENVELOPE_AMOUNT],
 }
 
 impl NoteStorage {
     pub fn new() -> Self {
         let oscillator_range = get_oscillator_array();
+        let envelope_range = get_envelope_array();
 
         Self {
             notes: FixedMap::new(64),
             released_notes: Vec::with_capacity(64 * OSCILLATOR_AMOUNT),
             oscillator_properties: oscillator_range.map(|_| Arc::new(Mutex::new(OscillatorProperties::default()))),
-            adsr: Arc::new(Mutex::new(Adsr::default())),
-            oscillator_range
+            envelope_properties: envelope_range.map(|_| Arc::new(Mutex::new(EnvelopeProperties::default()))),
+            oscillator_range,
+            envelope_range,
         }
     }
 
@@ -45,7 +48,8 @@ impl NoteStorage {
                                             self.oscillator_properties[i].clone(),
                                             sample_rate,
                             ),
-                            self.adsr.clone(),
+                            // TODO
+                            self.envelope_properties[0].clone(),
                             velocity,
                         )
                     });
@@ -95,13 +99,30 @@ impl NoteStorage {
         new_sample
     }
 
-    pub fn update_adsr(&mut self, adsr: Adsr) {
-        *self.adsr.lock().unwrap() = adsr;
-    }
-
-    pub fn update(&mut self, params: &ParamCache) {
+    pub fn update(&mut self, params: &Arc<SynthParams>) {
         for i in 0..OSCILLATOR_AMOUNT {
-            *self.oscillator_properties[i].lock().unwrap() = params.oscillator_properties[i].clone();
+            let osc_params = &params.oscillator_params[i];
+            *self.oscillator_properties[i].lock().unwrap() =
+                OscillatorProperties::new(
+                    osc_params.wave_kind.value(),
+                    osc_params.pulse_width.smoothed.next(),
+                    util::db_to_gain_fast(osc_params.volume.smoothed.next()),
+                    osc_params.enabled.value(),
+                    osc_params.transpose.value(),
+                    osc_params.detune.value(),
+                );
+        }
+        for i in 0..ENVELOPE_AMOUNT {
+            let env_params = &params.envelope_params[i];
+            *self.envelope_properties[i].lock().unwrap() =
+                EnvelopeProperties::new(
+                    Adsr::new(
+                        env_params.attack.smoothed.next(),
+                        env_params.decay.smoothed.next(),
+                        util::db_to_gain_fast(env_params.sustain.smoothed.next()),
+                        env_params.release.smoothed.next(),
+                    )
+                );
         }
     }
 }

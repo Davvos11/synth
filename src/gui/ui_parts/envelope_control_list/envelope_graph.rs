@@ -10,14 +10,16 @@ pub struct Graph<L>
     where L: Lens<Target=Arc<SynthParams>>
 {
     params: L,
+    index: usize,
 }
 
 impl<L> Graph<L>
     where L: Lens<Target=Arc<SynthParams>>
 {
-    pub fn new(cx: &mut Context, params: L) -> Handle<Self> {
+    pub fn new(cx: &mut Context, params: L, index: usize) -> Handle<Self> {
         Self {
             params,
+            index,
         }.build(cx, |_| {})
     }
 }
@@ -45,14 +47,22 @@ impl<L> View for Graph<L>
         canvas.stroke_path(&mut bottom_line, &paint);
 
         // Get ADSR
-        let params = self.params.clone().map(|p| {
-            Adsr::new(
-                p.attack.modulated_normalized_value(),
-                p.decay.modulated_normalized_value(),
-                p.sustain.modulated_normalized_value(),
-                p.release.modulated_normalized_value(),
-            )
-        }).get(cx);
+        let p = self.params.get(cx);
+        // let params = self.params.clone().map(|p| {
+        //     let env_params = &p.envelope_params[self.index];
+        //     Adsr::new(
+        //         env_params.attack.modulated_normalized_value(),
+        //         env_params.decay.modulated_normalized_value(),
+        //         env_params.sustain.modulated_normalized_value(),
+        //         env_params.release.modulated_normalized_value(),
+        //     )
+        // }).get(cx);
+        let params = Adsr::new(
+            p.envelope_params[self.index].attack.modulated_normalized_value(),
+            p.envelope_params[self.index].decay.modulated_normalized_value(),
+            p.envelope_params[self.index].sustain.modulated_normalized_value(),
+            p.envelope_params[self.index].release.modulated_normalized_value(),
+        );
 
         // Draw envelope curve
         let mut wave = vg::Path::new();
@@ -75,6 +85,5 @@ impl<L> View for Graph<L>
         let mut paint = Paint::color(Color::black().into());
         paint.set_line_width(1.0);
         canvas.stroke_path(&mut wave, &paint);
-
     }
 }

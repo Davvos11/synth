@@ -5,21 +5,25 @@ use nih_plug::prelude::{GuiContext, ParamSetter};
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::ResizeHandle;
-use crate::gui::ui_parts::envelope_controls::EnvelopeControls;
-use crate::gui::ui_parts::oscillator_control_list::{ControlEvent, OscillatorControlList};
+use crate::gui::events::{add_item, ControlEvent};
+use crate::gui::ui_parts::envelope_control_list::EnvelopeControlList;
+use crate::gui::ui_parts::oscillator_control_list::OscillatorControlList;
 use crate::gui::ui_parts::visualiser::Visualiser;
 use crate::SynthParams;
 use crate::process::visual_data::VisualData;
 
 mod components;
 mod ui_parts;
+mod events;
 
 #[derive(Lens)]
 pub struct GuiData {
     params: Arc<SynthParams>,
     visual_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
     gui_context: Arc<dyn GuiContext>,
+    // TODO data structure to generalise this?
     max_oscillators: Arc<AtomicBool>,
+    max_envelopes: Arc<AtomicBool>,
 }
 
 impl Model for GuiData {
@@ -28,33 +32,17 @@ impl Model for GuiData {
 
         event.map(|control_event: &ControlEvent, _meta| match control_event {
             ControlEvent::AddOscillator => {
-                let mut all_enabled = true;
-                let mut set = false;
-                // Loop over oscillators, setting the first that is disabled
-                // and checking if all have been enabled or not
-                for param in &self.params.oscillator_params {
-                    // Find first oscillator that is disabled
-                    if !param.enabled.value() {
-                        if set {
-                            all_enabled = false;
-                            break;
-                        }
-                        // Enable
-                        setter.begin_set_parameter(&param.enabled);
-                        setter.set_parameter(&param.enabled, true);
-                        setter.end_set_parameter(&param.enabled);
-                        // Go to next loop
-                        set = true;
-                        continue
-                    }
-                }
-
-                if all_enabled {
-                    self.max_oscillators.store(true, Ordering::Relaxed);
-                }
+                add_item(&self.params.oscillator_params, setter, self.max_oscillators.clone());
             }
             ControlEvent::RemoveOscillator => {
                 self.max_oscillators.store(false, Ordering::Relaxed);
+            }
+
+            ControlEvent::AddEnvelope => {
+                add_item(&self.params.envelope_params, setter, self.max_envelopes.clone());
+            }
+            ControlEvent::RemoveEnvelope => {
+                self.max_envelopes.store(false, Ordering::Relaxed);
             }
         });
 
@@ -84,9 +72,13 @@ pub(crate) fn create(
                 visual_data: visual_data.clone(),
                 gui_context: gui_cx,
                 max_oscillators: Arc::new(AtomicBool::new(false)),
+                max_envelopes: Arc::new(AtomicBool::new(false)),
             }.build(cx);
 
-            let l = GuiData::max_oscillators.map(|m|{
+            let max_oscillators = GuiData::max_oscillators.map(|m|{
+                m.load(Ordering::Relaxed)
+            });
+            let max_envelopes = GuiData::max_envelopes.map(|m|{
                 m.load(Ordering::Relaxed)
             });
 
@@ -102,9 +94,9 @@ pub(crate) fn create(
                     .bottom(Pixels(20.0));
 
                 HStack::new(cx, |cx| {
-                    OscillatorControlList::new(cx, l);
+                    OscillatorControlList::new(cx, max_oscillators);
 
-                    EnvelopeControls::new(cx);
+                    EnvelopeControlList::new(cx, max_envelopes);
 
                     Visualiser::new(cx);
                 }).col_between(Pixels(20.0));

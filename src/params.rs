@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
-use crate::{gui, OSCILLATOR_AMOUNT};
+use crate::{ENVELOPE_AMOUNT, gui, OSCILLATOR_AMOUNT};
 use crate::process::note::WaveKind;
-use crate::utils::get_oscillator_array;
+use crate::utils::{get_envelope_array, get_oscillator_array};
 
 #[derive(Params)]
 pub struct SynthParams {
@@ -15,17 +15,11 @@ pub struct SynthParams {
     #[id = "volume"]
     pub volume: FloatParam,
 
-    #[id = "attack"]
-    pub attack: FloatParam,
-    #[id = "decay"]
-    pub decay: FloatParam,
-    #[id = "sustain"]
-    pub sustain: FloatParam,
-    #[id = "release"]
-    pub release: FloatParam,
-
     #[nested(array, group = "Oscillator Parameters")]
     pub oscillator_params: [OscillatorParams; OSCILLATOR_AMOUNT],
+
+    #[nested(array, group = "Envelope Parameters")]
+    pub envelope_params: [EnvelopeParams; ENVELOPE_AMOUNT],
 }
 
 #[derive(Params)]
@@ -49,6 +43,21 @@ pub struct OscillatorParams {
     pub detune: FloatParam,
 }
 
+#[derive(Params)]
+pub struct EnvelopeParams {
+    #[id = "enabled"]
+    pub enabled: BoolParam,
+
+    #[id = "attack"]
+    pub attack: FloatParam,
+    #[id = "decay"]
+    pub decay: FloatParam,
+    #[id = "sustain"]
+    pub sustain: FloatParam,
+    #[id = "release"]
+    pub release: FloatParam,
+}
+
 impl Default for SynthParams {
     fn default() -> Self {
         Self {
@@ -66,57 +75,13 @@ impl Default for SynthParams {
                 .with_step_size(0.01)
                 .with_unit(" dB"),
 
-            attack: FloatParam::new(
-                "Attack",
-                0.01,
-                FloatRange::Skewed {
-                    min: 0.01,
-                    max: 10.0,
-                    factor: FloatRange::skew_factor(-1.0),
-                },
-            ).with_smoother(SmoothingStyle::Linear(3.0))
-                .with_step_size(0.01)
-                .with_unit(" sec"),
-
-            decay: FloatParam::new(
-                "Decay",
-                0.2,
-                FloatRange::Skewed {
-                    min: 0.01,
-                    max: 10.0,
-                    factor: FloatRange::skew_factor(-1.0),
-                },
-            ).with_smoother(SmoothingStyle::Linear(3.0))
-                .with_step_size(0.01)
-                .with_unit(" sec"),
-
-            sustain: FloatParam::new(
-                "Sustain",
-                -10.0,
-                FloatRange::Skewed {
-                    min: util::MINUS_INFINITY_DB,
-                    max: -0.01,
-                    factor: FloatRange::skew_factor(1.0),
-                },
-            ).with_smoother(SmoothingStyle::Logarithmic(3.0))
-                .with_step_size(0.01)
-                .with_unit(" dB"),
-
-            release: FloatParam::new(
-                "Release",
-                0.2,
-                FloatRange::Skewed {
-                    min: 0.01,
-                    max: 10.0,
-                    factor: FloatRange::skew_factor(-1.0),
-                },
-            ).with_smoother(SmoothingStyle::Linear(3.0))
-                .with_step_size(0.01)
-                .with_unit(" sec"),
-
             oscillator_params: get_oscillator_array().map(|i| {
                 OscillatorParams::new(i)
             }),
+
+            envelope_params: get_envelope_array().map(|i| {
+                EnvelopeParams::new(i)
+            })
         }
     }
 }
@@ -176,4 +141,85 @@ impl Default for OscillatorParams {
     fn default() -> Self {
         Self::new(0)
     }
+}
+
+impl Enable for OscillatorParams {
+    fn enabled(&self) -> &BoolParam {
+        &self.enabled
+    }
+}
+
+impl EnvelopeParams {
+    fn new(index: usize) -> Self {
+        Self {
+            enabled: BoolParam::new(
+                format!("ENV{index} Enabled"),
+                index == 0,
+            ),
+
+            attack: FloatParam::new(
+                format!("ENV{index} Attack"),
+                0.01,
+                FloatRange::Skewed {
+                    min: 0.01,
+                    max: 10.0,
+                    factor: FloatRange::skew_factor(-1.0),
+                },
+            ).with_smoother(SmoothingStyle::Linear(3.0))
+                .with_step_size(0.01)
+                .with_unit(" sec"),
+
+            decay: FloatParam::new(
+                format!("ENV{index} Decay"),
+                0.2,
+                FloatRange::Skewed {
+                    min: 0.01,
+                    max: 10.0,
+                    factor: FloatRange::skew_factor(-1.0),
+                },
+            ).with_smoother(SmoothingStyle::Linear(3.0))
+                .with_step_size(0.01)
+                .with_unit(" sec"),
+
+            sustain: FloatParam::new(
+                format!("ENV{index} Sustain"),
+                -10.0,
+                FloatRange::Skewed {
+                    min: util::MINUS_INFINITY_DB,
+                    max: -0.01,
+                    factor: FloatRange::skew_factor(1.0),
+                },
+            ).with_smoother(SmoothingStyle::Logarithmic(3.0))
+                .with_step_size(0.01)
+                .with_unit(" dB"),
+
+            release: FloatParam::new(
+                format!("ENV{index} Release"),
+                0.2,
+                FloatRange::Skewed {
+                    min: 0.01,
+                    max: 10.0,
+                    factor: FloatRange::skew_factor(-1.0),
+                },
+            ).with_smoother(SmoothingStyle::Linear(3.0))
+                .with_step_size(0.01)
+                .with_unit(" sec"),
+        }
+    }
+}
+
+impl Default for EnvelopeParams {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
+impl Enable for EnvelopeParams {
+    fn enabled(&self) -> &BoolParam {
+        &self.enabled
+    }
+}
+
+pub trait Enable {
+    fn enabled(&self) -> &BoolParam;
 }

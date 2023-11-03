@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use enum_iterator::Sequence;
 use nih_plug::prelude::Enum;
 use nih_plug::util;
-use crate::process::envelope::{Adsr, Envelope};
+use crate::process::envelope::{Envelope, EnvelopeProperties};
 
 
 pub struct Note {
@@ -14,12 +14,12 @@ pub struct Note {
 }
 
 impl Note {
-    pub fn new(oscillator: Oscillator, adsr: Arc<Mutex<Adsr>>, velocity: f32) -> Self {
+    pub fn new(oscillator: Oscillator, properties: Arc<Mutex<EnvelopeProperties>>, velocity: f32) -> Self {
         let sample_rate = oscillator.sample_rate;
 
         Self {
             oscillator,
-            envelope: Envelope::new(adsr, sample_rate),
+            envelope: Envelope::new(properties, sample_rate),
             finished: false,
             velocity,
         }

@@ -1,10 +1,7 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use triple_buffer::TripleBuffer;
-use utils::cache::ParamCache;
-use crate::process::note::OscillatorProperties;
 use crate::params::SynthParams;
-use crate::process::envelope::Adsr;
 use crate::process::notes::NoteStorage;
 use crate::process::visual_data::{SynthData, VisualData};
 
@@ -26,7 +23,7 @@ pub struct Synth {
     notes: NoteStorage,
     data: SynthData,
     visual_data: Arc<Mutex<triple_buffer::Output<VisualData>>>,
-    param_cache: ParamCache,
+    // param_cache: ParamCache,
 }
 
 
@@ -40,7 +37,7 @@ impl Default for Synth {
             notes: NoteStorage::new(),
             data: SynthData::new(synth_data_input),
             visual_data: Arc::new(Mutex::new(synth_data_output)),
-            param_cache: ParamCache::default(),
+            // param_cache: ParamCache::default(),
         }
     }
 }
@@ -95,7 +92,6 @@ impl Plugin for Synth {
             as f32);
 
         // Load initial param data
-        self.get_and_set_oscillator_params();
         true
     }
 
@@ -103,12 +99,8 @@ impl Plugin for Synth {
         for (_sample_id, channel_samples) in buffer.iter_samples().enumerate() {
             // Get ui parameters
             let volume = self.params.volume.smoothed.next();
-            let adsr = self.get_adsr();
-            self.get_and_set_oscillator_params();
-
-            // Update parameters of notes that are playing
-            self.notes.update_adsr(adsr);
-            self.notes.update(&self.param_cache);
+            // Update oscillator and envelope parameters
+            self.notes.update(&self.params);
 
             // Process midi (modifies `self.notes` and `self.released_notes`)
             let mut next_event = context.next_event();
@@ -151,27 +143,7 @@ impl Plugin for Synth {
 }
 
 impl Synth {
-    fn get_adsr(&self) -> Adsr {
-        Adsr::new(
-            self.params.attack.smoothed.next(),
-            self.params.decay.smoothed.next(),
-            util::db_to_gain_fast(self.params.sustain.smoothed.next()),
-            self.params.release.smoothed.next(),
-        )
-    }
 
-    fn get_and_set_oscillator_params(&mut self) {
-        self.params.oscillator_params.iter().enumerate().for_each(|(i, params)| {
-            self.param_cache.oscillator_properties[i] = OscillatorProperties::new(
-                params.wave_kind.value(),
-                params.pulse_width.smoothed.next(),
-                util::db_to_gain_fast(params.volume.smoothed.next()),
-                params.enabled.value(),
-                params.transpose.value(),
-                params.detune.value(),
-            );
-        });
-    }
 }
 
 impl Vst3Plugin for Synth {

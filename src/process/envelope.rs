@@ -1,5 +1,24 @@
 use std::sync::{Arc, Mutex};
 
+#[derive(Clone)]
+pub struct EnvelopeProperties {
+    adsr: Adsr,
+}
+
+impl EnvelopeProperties {
+    pub fn new(adsr: Adsr) -> Self {
+        Self { adsr }
+    }
+}
+
+impl Default for EnvelopeProperties {
+    fn default() -> Self {
+        Self {
+            adsr: Adsr::default(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Adsr {
     attack: f32,
@@ -35,7 +54,7 @@ impl Default for Adsr {
 }
 
 pub struct Envelope {
-    adsr: Arc<Mutex<Adsr>>,
+    properties: Arc<Mutex<EnvelopeProperties>>,
     delta: f32,
     time: f32,
     last_volume: f32,
@@ -53,9 +72,9 @@ enum Stage {
 }
 
 impl Envelope {
-    pub fn new(adsr: Arc<Mutex<Adsr>>, sample_rate: f32) -> Self {
+    pub fn new(properties: Arc<Mutex<EnvelopeProperties>>, sample_rate: f32) -> Self {
         Self {
-            adsr,
+            properties,
             delta: 1.0 / sample_rate,
             time: 0.0,
             stage: Stage::Held,
@@ -69,8 +88,9 @@ impl Envelope {
 
     pub fn get_gain(&mut self) -> (f32, bool) {
         // Get ADSR value
-        let adsr = *self.adsr.lock().expect("Failed to acquire ADSR lock");
-        
+        let properties = self.properties.lock().expect("Failed to acquire ADSR lock");
+        let adsr = properties.adsr;
+
         // Calculate value based on envelope curve
         let gain = match self.stage {
             Stage::Held => {
