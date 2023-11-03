@@ -1,10 +1,11 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
-use crate::cache::ParamCache;
-use crate::fixed_map::FixedMap;
-use crate::note::{Adsr, Note, Oscillator, OscillatorProperties};
+use crate::utils::cache::ParamCache;
+use crate::utils::fixed_map::FixedMap;
 use crate::params::get_oscillator_array;
 use crate::{OSCILLATOR_AMOUNT, Synth};
+use crate::process::envelope::Adsr;
+use crate::process::note::{Note, Oscillator, OscillatorProperties};
 
 pub struct NoteStorage {
     notes: FixedMap<u8, [Note; OSCILLATOR_AMOUNT]>,

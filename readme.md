@@ -8,7 +8,10 @@ Mainly created to learn about writing Synthesizers.
 - [x] Polyphonic midi input
 - [x] ADSR
 - [x] Visualisation
-  - [ ] Improve visualisation
+  - [x] Audio scope
+  - [ ] ADSR graph
+  - [ ] Parameter modulation
+  - [ ] LFO scope
 - [x] Other oscillator waves
 - [x] Oscillator parameters
 - [x] Multiple oscillators

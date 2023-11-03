@@ -1,10 +1,10 @@
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::{ParamButton, ParamButtonExt, RawParamEvent};
-use crate::gui::controls::selector::{ButtonLabel, get_enum_name, Selector};
+use crate::gui::components::knob::ParamKnob;
+use crate::gui::components::selector::{ButtonLabel, get_enum_name, Selector};
 use crate::gui::GuiData;
-use crate::gui::knob::{ParamKnob};
-use crate::gui::oscillator_control_list::ControlEvent;
-use crate::note::WaveKind;
+use crate::gui::ui_parts::oscillator_control_list::ControlEvent;
+use crate::process::note::WaveKind;
 
 pub struct OscillatorControls {}
 

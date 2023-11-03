@@ -3,7 +3,7 @@ use nih_plug::util;
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::{ParamSlider, PeakMeter};
 use crate::gui::GuiData;
-use crate::gui::visualiser::scope::Scope;
+use crate::gui::ui_parts::visualiser::scope::Scope;
 
 mod scope;
 

@@ -5,17 +5,14 @@ use nih_plug::prelude::{GuiContext, ParamSetter};
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::ResizeHandle;
-use crate::gui::controls::Controls;
-use crate::gui::visualiser::Visualiser;
+use crate::gui::ui_parts::envelope_controls::EnvelopeControls;
+use crate::gui::ui_parts::oscillator_control_list::{ControlEvent, OscillatorControlList};
+use crate::gui::ui_parts::visualiser::Visualiser;
 use crate::SynthParams;
 use crate::process::visual_data::VisualData;
-use crate::gui::oscillator_control_list::{ControlEvent, OscillatorControlList};
 
-mod controls;
-mod visualiser;
-mod grid;
-mod knob;
-mod oscillator_control_list;
+mod components;
+mod ui_parts;
 
 #[derive(Lens)]
 pub struct GuiData {
@@ -107,7 +104,7 @@ pub(crate) fn create(
                 HStack::new(cx, |cx| {
                     OscillatorControlList::new(cx, l);
 
-                    Controls::new(cx);
+                    EnvelopeControls::new(cx);
 
                     Visualiser::new(cx);
                 }).col_between(Pixels(20.0));

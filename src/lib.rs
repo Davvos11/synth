@@ -1,18 +1,17 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use triple_buffer::TripleBuffer;
-use crate::cache::ParamCache;
-use crate::note::{Adsr, OscillatorProperties};
+use utils::cache::ParamCache;
+use crate::process::note::OscillatorProperties;
 use crate::params::SynthParams;
+use crate::process::envelope::Adsr;
 use crate::process::notes::NoteStorage;
 use crate::process::visual_data::{SynthData, VisualData};
 
 mod gui;
-mod note;
-mod fixed_map;
 mod params;
 mod process;
-mod cache;
+mod utils;
 
 /// The maximum amount of oscillators the synth can use
 pub const OSCILLATOR_AMOUNT: usize = 4;

@@ -3,15 +3,11 @@ use nih_plug_vizia::widgets::ParamSlider;
 use crate::gui::GuiData;
 use nih_plug_vizia::vizia::prelude::*;
 
-pub mod selector;
-pub mod fake_param_button;
-pub mod oscillator_controls;
+pub struct EnvelopeControls {}
 
-pub struct Controls {}
+impl View for EnvelopeControls {}
 
-impl View for Controls {}
-
-impl Controls {
+impl EnvelopeControls {
     pub fn new(cx: &mut Context) -> Handle<Self> {
         Self {}.build(cx, |cx| {
             VStack::new(cx, |cx| {

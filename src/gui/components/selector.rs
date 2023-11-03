@@ -3,8 +3,8 @@ use enum_iterator::{all, All, Sequence};
 use nih_plug::prelude::{Enum, EnumParam, Param};
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::param_base::ParamWidgetBase;
-use crate::gui::controls::fake_param_button::FakeParamButton;
-use crate::gui::grid::{Grid, GridVerticalModifiers};
+use crate::gui::components::fake_param_button::FakeParamButton;
+use crate::gui::components::grid::{Grid, GridVerticalModifiers};
 
 enum SelectorEvent<T>
     where T: PartialEq + Enum + 'static + Sequence + Send + Copy

@@ -3,10 +3,7 @@ use std::sync::{Arc, Mutex};
 use enum_iterator::Sequence;
 use nih_plug::prelude::Enum;
 use nih_plug::util;
-pub use crate::note::envelope::Adsr;
-use crate::note::envelope::Envelope;
-
-mod envelope;
+use crate::process::envelope::{Adsr, Envelope};
 
 
 pub struct Note {

@@ -1,6 +1,6 @@
-use crate::note::OscillatorProperties;
 use crate::OSCILLATOR_AMOUNT;
 use crate::params::get_oscillator_array;
+use crate::process::note::OscillatorProperties;
 
 pub struct ParamCache {
     pub oscillator_properties: [OscillatorProperties; OSCILLATOR_AMOUNT],
