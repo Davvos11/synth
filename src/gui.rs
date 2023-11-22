@@ -44,6 +44,17 @@ impl Model for GuiData {
             ControlEvent::RemoveEnvelope => {
                 self.max_envelopes.store(false, Ordering::Relaxed);
             }
+
+            ControlEvent::SetEnvelopeTarget(envelope_idx, target_idx, new_target) => {
+                self.params.envelope_params[*envelope_idx]
+                    .targets.lock().expect("Cannot lock envelope targets")
+                    .targets[*target_idx].0 = *new_target;
+            }
+            ControlEvent::SetEnvelopeTargetDepth(envelope_idx, target_idx, new_depth) => {
+                self.params.envelope_params[*envelope_idx]
+                    .targets.lock().expect("Cannot lock envelope targets")
+                    .targets[*target_idx].1 = *new_depth;
+            }
         });
 
     }

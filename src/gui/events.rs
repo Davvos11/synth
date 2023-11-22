@@ -3,12 +3,15 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use nih_plug::prelude::ParamSetter;
 use crate::OSCILLATOR_AMOUNT;
 use crate::params::Enable;
+use crate::params::envelope_target::Target;
 
 pub enum ControlEvent {
     AddOscillator,
     RemoveOscillator,
     AddEnvelope,
     RemoveEnvelope,
+    SetEnvelopeTarget(usize, usize, Target),
+    SetEnvelopeTargetDepth(usize, usize, f32),
 }
 
 pub fn add_item<T>(params: &[T; OSCILLATOR_AMOUNT],

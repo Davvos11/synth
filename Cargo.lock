@@ -2435,6 +2435,7 @@ dependencies = [
  "indexmap",
  "nih_plug",
  "nih_plug_vizia",
+ "serde",
  "triple_buffer",
 ]
 

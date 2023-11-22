@@ -7,6 +7,7 @@ use crate::utils::get_envelope_array;
 
 mod envelope_controls;
 mod envelope_graph;
+mod target_dropdown;
 
 pub struct EnvelopeControlList {}
 

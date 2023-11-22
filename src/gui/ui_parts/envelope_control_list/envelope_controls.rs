@@ -6,6 +6,7 @@ use crate::gui::components::knob::ParamKnob;
 use crate::gui::components::param_button_wrapper::ParamButtonWrapper;
 use crate::gui::events::ControlEvent;
 use crate::gui::ui_parts::envelope_control_list::envelope_graph::Graph;
+use crate::gui::ui_parts::envelope_control_list::target_dropdown::TargetsList;
 
 pub struct EnvelopeControls {}
 
@@ -50,6 +51,9 @@ impl EnvelopeControls {
                 })
                     .bottom(Pixels(5.0))
                     .top(Pixels(5.0));
+
+                TargetsList::new(cx, GuiData::params, index)
+                    .width(Percentage(100.0));
             }).row_between(Pixels(5.0))
                 .child_left(Stretch(1.0))
                 .child_right(Stretch(1.0))

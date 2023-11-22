@@ -1,5 +1,7 @@
+use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
 use crate::params::Enable;
+use crate::params::envelope_target::{EnvelopeTargets, Target};
 
 #[derive(Params)]
 pub struct EnvelopeParams {
@@ -14,6 +16,10 @@ pub struct EnvelopeParams {
     pub sustain: FloatParam,
     #[id = "release"]
     pub release: FloatParam,
+
+    // TODO test if this properly persists in a plugin host
+    #[persist = "targets"]
+    pub targets: Arc<Mutex<EnvelopeTargets>>,
 }
 
 impl EnvelopeParams {
@@ -71,6 +77,14 @@ impl EnvelopeParams {
             ).with_smoother(SmoothingStyle::Linear(3.0))
                 .with_step_size(0.01)
                 .with_unit(" sec"),
+
+            targets: Arc::new(Mutex::new(
+                if index == 0 {
+                    EnvelopeTargets::with_target(Target::AllOscillators)
+                } else {
+                    EnvelopeTargets::default()
+                }
+            )),
         }
     }
 }

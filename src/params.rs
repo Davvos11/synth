@@ -7,6 +7,7 @@ use crate::params::oscillator_params::OscillatorParams;
 use crate::utils::{get_envelope_array, get_oscillator_array};
 
 mod envelope_params;
+pub mod envelope_target;
 mod oscillator_params;
 
 pub trait Enable {
