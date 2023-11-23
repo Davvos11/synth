@@ -75,6 +75,7 @@ pub(crate) fn create(
         move |cx, gui_cx| {
             assets::register_noto_sans_light(cx);
             assets::register_noto_sans_thin(cx);
+            assets::register_noto_sans_bold(cx);
 
             cx.add_stylesheet("assets/style.css").expect("Failed to load stylesheet");
 

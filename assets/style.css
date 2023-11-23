@@ -27,6 +27,61 @@ param-selector param-button {
     child-space: 1s;
 }
 
+.dropdown-icon {
+    color: #3c3f41;
+    font-size: 12px;
+    space: 1s;
+    right: 5px;
+}
+
+dropdown .title {
+    height: 30px;
+    width: auto;
+    border-color: #0a0a0a;
+    border-width: 1px;
+    border-radius: 0;
+    child-top: 1s;
+    child-right: 7px;
+    child-bottom: 1s;
+    child-left: 7px;
+    background-color: #d0d0d000;
+    transition: background-color 0.1 0;
+    outer-shadow: 0 0 0 #00000000;
+}
+
+dropdown .title:hover {
+    background-color: #d0d0d080;
+    transition: background-color 0.1 0;
+}
+
+dropdown > popup {
+    outer-shadow: 0 -1 1 white;
+    border-color: #0a0a0a;
+    border-width: 1px;
+    border-radius: 0;
+    background-color: white;
+}
+
+dropdown list label {
+    child-top: 1s;
+    child-right: 7px;
+    child-bottom: 1s;
+    child-left: 7px;
+    /*border-color: #0a0a0a;*/
+    /*border-width: 1px;*/
+}
+
+dropdown list label:hover {
+    background-color: #d0d0d080;
+    transition: background-color 0.1 0;
+}
+
+dropdown list .separator {
+    width: 1s;
+    height: 1px;
+    background-color: #0a0a0a;
+}
+
 /*vstack {*/
 /*    outline-color: red;*/
 /*    outline-width: 2px;*/

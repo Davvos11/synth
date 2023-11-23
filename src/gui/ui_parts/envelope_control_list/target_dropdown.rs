@@ -1,9 +1,6 @@
 use std::sync::Arc;
-use nih_plug::params::FloatParam;
-use nih_plug::prelude::FloatRange;
+use nih_plug_vizia::assets;
 use nih_plug_vizia::vizia::prelude::*;
-use nih_plug_vizia::widgets::ParamSlider;
-use serde::de::Unexpected::Str;
 use crate::gui::components::fake_param_slider::{FakeParamSlider, SliderHandle};
 use crate::gui::events::ControlEvent;
 use crate::params::envelope_target::{get_possible_targets, Target};
@@ -59,24 +56,39 @@ impl TargetSelector {
             TargetData::new(current_target.get(cx)).build(cx);
 
             HStack::new(cx, |cx| {
-                Dropdown::new(
-                    cx,
-                    move |cx| {
-                        Label::new(cx, TargetData::target.map(|t| t.to_string()))
-                    },
-                    move |cx| {
-                        for target in get_possible_targets() {
-                            Label::new(cx, &target.to_string())
-                                .on_press(move |cx| {
-                                    cx.emit(ControlEvent::SetEnvelopeTarget(
-                                        envelope_index, target_index, target,
-                                    ));
-                                    cx.emit(PopupEvent::Close);
-                                })
-                                .width(Stretch(1.0));
-                        }
-                    },
-                ).width(Percentage(60.0));
+                ZStack::new(cx, |cx| {
+                    Dropdown::new(
+                        cx,
+                        move |cx| {
+                            Label::new(cx, TargetData::target.map(|t| t.to_string()))
+                        },
+                        move |cx| {
+                            let max_index = TargetData::possible_targets.get(cx).len() - 1;
+                            let active_target = TargetData::target.get(cx);
+                            List::new(cx, TargetData::possible_targets, move |cx, i, get_target| {
+                                let target = get_target.get(cx);
+                                Label::new(cx, &target.to_string())
+                                    .font_family(
+                                        if target == active_target { vec![FamilyOwned::Name(String::from(assets::NOTO_SANS_BOLD))]  }
+                                        else {vec![FamilyOwned::Name(String::from(assets::NOTO_SANS_LIGHT))] })
+                                    .on_press(move |cx| {
+                                        cx.emit(ControlEvent::SetEnvelopeTarget(
+                                            envelope_index, target_index, target,
+                                        ));
+                                        cx.emit(PopupEvent::Close);
+                                    })
+                                    .width(Stretch(1.0));
+                                if i != max_index {
+                                    Element::new(cx).class("separator");
+                                }
+                            });
+                        },
+                    ).width(Percentage(100.0));
+
+                    Label::new(cx, "v")
+                        .class("dropdown-icon");
+                }).width(Percentage(60.0));
+
 
                 // TODO get default value from somewhere?
                 FakeParamSlider::new(cx, TargetData::depth, 1.0)
@@ -98,6 +110,7 @@ impl TargetSelector {
 pub struct TargetData {
     pub target: Target,
     pub depth: f32,
+    pub possible_targets: Vec<Target>,
 }
 
 impl TargetData {
@@ -105,6 +118,7 @@ impl TargetData {
         Self {
             target,
             depth,
+            possible_targets: get_possible_targets(),
         }
     }
 }
