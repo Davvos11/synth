@@ -19,6 +19,9 @@ Mainly created to learn about writing Synthesizers.
   - [ ] Multiple ADSR curves
   - [ ] Modulate "any" parameter
   - [ ] LFOs
+- [ ] Advanced midi input
+  - [ ] Sustain
+  - [ ] CC Modulation
 - [ ] Filters
 
 ## Run
