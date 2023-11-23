@@ -3,6 +3,8 @@ use nih_plug::params::FloatParam;
 use nih_plug::prelude::FloatRange;
 use nih_plug_vizia::vizia::prelude::*;
 use nih_plug_vizia::widgets::ParamSlider;
+use serde::de::Unexpected::Str;
+use crate::gui::components::fake_param_slider::{FakeParamSlider, SliderHandle};
 use crate::gui::events::ControlEvent;
 use crate::params::envelope_target::{get_possible_targets, Target};
 use crate::params::SynthParams;
@@ -30,6 +32,9 @@ impl TargetsList {
 pub struct TargetSelector {}
 
 impl View for TargetSelector {
+    fn element(&self) -> Option<&'static str> {
+        Some("target-selector")
+    }
     // fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     //     event.map(|control_event: &ControlEvent, _meta| match control_event {
     //         SetEnvelopeTarget(_, _, _) => {
@@ -71,14 +76,20 @@ impl TargetSelector {
                                 .width(Stretch(1.0));
                         }
                     },
-                ).width(Percentage(50.0));
+                ).width(Percentage(60.0));
 
-                Slider::new(cx, TargetData::depth)
+                // TODO get default value from somewhere?
+                FakeParamSlider::new(cx, TargetData::depth, 1.0)
                     .on_changing(move |cx, value| {
                         cx.emit(ControlEvent::SetEnvelopeTargetDepth(envelope_index, target_index, value))
                     })
-                    .width(Percentage(50.0));
-            }).width(Percentage(100.0));
+                    .width(Stretch(1.0));
+            })
+                .width(Percentage(100.0))
+                .bottom(Pixels(10.0))
+                .col_between(Pixels(2.0))
+                .child_left(Pixels(5.0))
+                .child_right(Pixels(5.0));
         })
     }
 }
