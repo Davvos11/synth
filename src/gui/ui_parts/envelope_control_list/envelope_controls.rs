@@ -53,7 +53,11 @@ impl EnvelopeControls {
                     .top(Pixels(5.0));
 
                 TargetsList::new(cx, GuiData::params, index)
-                    .width(Percentage(100.0));
+                    .width(Percentage(100.0))
+                    .child_left(Pixels(5.0))
+                    .child_right(Pixels(5.0))
+                    .row_between(Pixels(5.0))
+                    .bottom(Pixels(10.0));
             }).row_between(Pixels(5.0))
                 .child_left(Stretch(1.0))
                 .child_right(Stretch(1.0))

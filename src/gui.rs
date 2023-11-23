@@ -14,7 +14,7 @@ use crate::process::visual_data::VisualData;
 
 mod components;
 mod ui_parts;
-mod events;
+pub(crate) mod events;
 
 #[derive(Lens)]
 pub struct GuiData {
@@ -55,6 +55,7 @@ impl Model for GuiData {
                     .targets.lock().expect("Cannot lock envelope targets")
                     .targets[*target_idx].1 = *new_depth;
             }
+            _ => {}
         });
 
     }

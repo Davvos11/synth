@@ -1,13 +1,22 @@
 use std::fmt::{Display, Formatter};
+use std::sync::MutexGuard;
+use nih_plug_vizia::vizia::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::OSCILLATOR_AMOUNT;
+use crate::gui::events::ControlEvent;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Lens)]
 pub struct EnvelopeTargets {
     pub targets: Vec<(Target, f32)>,
 }
 
 impl EnvelopeTargets {
+    pub fn from(from: MutexGuard<Self>) -> Self {
+        Self {
+            targets: from.targets.to_vec()
+        }
+    }
+    
     pub fn new() -> Self {
         Self {
             targets: Vec::with_capacity(64),
@@ -19,11 +28,36 @@ impl EnvelopeTargets {
         new.targets.push((target, 1.0));
         new
     }
+
+    pub fn add(&mut self) {
+        self.targets.push((Target::None, 1.0))
+    }
+
+    pub fn remove(&mut self, index: usize) -> (Target, f32) {
+        self.targets.remove(index)
+    }
 }
 
 impl Default for EnvelopeTargets {
     fn default() -> Self {
         Self::with_target(Target::None)
+    }
+}
+
+impl Model for EnvelopeTargets {
+    #[allow(clippy::single_match)]
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|control_event: &ControlEvent, _meta|
+            match control_event {
+                ControlEvent::AddEnvelopeTarget => {
+                    self.add();
+                }
+                ControlEvent::RemoveEnvelopeTarget(i) => {
+                    self.remove(*i);
+                }
+                _ => {}
+            }
+        );
     }
 }
 

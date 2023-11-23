@@ -1,28 +1,74 @@
 use std::sync::Arc;
 use nih_plug_vizia::assets;
 use nih_plug_vizia::vizia::prelude::*;
+use crate::gui::components::fake_param_button::FakeParamButton;
 use crate::gui::components::fake_param_slider::{FakeParamSlider, SliderHandle};
 use crate::gui::events::ControlEvent;
-use crate::params::envelope_target::{get_possible_targets, Target};
+use crate::params::envelope_target::{EnvelopeTargets, get_possible_targets, Target};
 use crate::params::SynthParams;
 
-pub struct TargetsList {}
+pub struct TargetsList<L>
+    where L: Lens<Target=Arc<SynthParams>> + Copy,
+{
+    params: L,
+    envelope_index: usize,
+}
 
-impl View for TargetsList {}
-
-impl TargetsList {
-    pub fn new<L>(cx: &mut Context, params: L, envelope_index: usize) -> Handle<Self>
-        where L: Lens<Target=Arc<SynthParams>> + Copy,
+impl<L> TargetsList<L>
+    where L: Lens<Target=Arc<SynthParams>> + Copy,
+{
+    pub fn new(cx: &mut Context, params: L, envelope_index: usize) -> Handle<Self>
     {
-        Self {}.build(cx, |cx| {
+        Self {
+            params,
+            envelope_index,
+        }.build(cx, |cx| {
             let data = params.get(cx);
-            let length = data.envelope_params[envelope_index].targets
-                .lock().expect("Cannot lock envelope targets").targets.len();
+            EnvelopeTargets::from(
+                data.envelope_params[envelope_index].targets
+                    .lock().expect("Cannot lock envelope targets")
+            ).build(cx);
 
-            for i in 0..length {
+            HStack::new(cx, |cx| {
+                Label::new(cx, "Targets:");
+                FakeParamButton::new(cx,
+                                     move |cx| {
+                                         cx.emit(ControlEvent::AddEnvelopeTarget);
+                                     },
+                                     |cx| Label::new(cx, "+"))
+                    .left(Stretch(1.0))
+                    .right(Pixels(0.0));
+            })
+                .child_space(Stretch(1.0))
+                .child_left(Pixels(0.0))
+                .col_between(Pixels(5.0));
+
+            List::new(cx, EnvelopeTargets::targets, move |cx, i, _| {
+                // TODO use lens instead of index
                 TargetSelector::new(cx, params, envelope_index, i);
-            }
+            })
+                .width(Stretch(1.0))
+                .row_between(Pixels(1.0));
         })
+    }
+}
+
+impl<L> View for TargetsList<L>
+    where L: Lens<Target=Arc<SynthParams>> + Copy,
+{
+    #[allow(clippy::single_match)]
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|control_event: &ControlEvent, _meta|
+            match control_event {
+                ControlEvent::AddEnvelopeTarget | ControlEvent::RemoveEnvelopeTarget(_) => {
+                    let data = self.params.get(cx);
+                    let mut targets = data.envelope_params[self.envelope_index].targets
+                        .lock().expect("Cannot lock envelope targets");
+                    targets.targets = EnvelopeTargets::targets.get(cx);
+                }
+                _ => {}
+            }
+        );
     }
 }
 
@@ -32,14 +78,6 @@ impl View for TargetSelector {
     fn element(&self) -> Option<&'static str> {
         Some("target-selector")
     }
-    // fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-    //     event.map(|control_event: &ControlEvent, _meta| match control_event {
-    //         SetEnvelopeTarget(_, _, _) => {
-    //             dbg!("test");
-    //         }
-    //         _ => {}
-    //     });
-    // }
 }
 
 impl TargetSelector {
@@ -69,8 +107,7 @@ impl TargetSelector {
                                 let target = get_target.get(cx);
                                 Label::new(cx, &target.to_string())
                                     .font_family(
-                                        if target == active_target { vec![FamilyOwned::Name(String::from(assets::NOTO_SANS_BOLD))]  }
-                                        else {vec![FamilyOwned::Name(String::from(assets::NOTO_SANS_LIGHT))] })
+                                        if target == active_target { vec![FamilyOwned::Name(String::from(assets::NOTO_SANS_BOLD))] } else { vec![FamilyOwned::Name(String::from(assets::NOTO_SANS_LIGHT))] })
                                     .on_press(move |cx| {
                                         cx.emit(ControlEvent::SetEnvelopeTarget(
                                             envelope_index, target_index, target,
@@ -96,12 +133,18 @@ impl TargetSelector {
                         cx.emit(ControlEvent::SetEnvelopeTargetDepth(envelope_index, target_index, value))
                     })
                     .width(Stretch(1.0));
+
+                FakeParamButton::new(cx,
+                                     move |cx| {
+                                         cx.emit(ControlEvent::RemoveEnvelopeTarget(target_index))
+                                     },
+                                     |cx| {
+                                         Label::new(cx, "-")
+                                     },
+                );
             })
                 .width(Percentage(100.0))
-                .bottom(Pixels(10.0))
-                .col_between(Pixels(2.0))
-                .child_left(Pixels(5.0))
-                .child_right(Pixels(5.0));
+                .col_between(Pixels(2.0));
         })
     }
 }

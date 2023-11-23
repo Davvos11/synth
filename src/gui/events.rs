@@ -12,6 +12,8 @@ pub enum ControlEvent {
     RemoveEnvelope,
     SetEnvelopeTarget(usize, usize, Target),
     SetEnvelopeTargetDepth(usize, usize, f32),
+    AddEnvelopeTarget,
+    RemoveEnvelopeTarget(usize)
 }
 
 pub fn add_item<T>(params: &[T; OSCILLATOR_AMOUNT],
