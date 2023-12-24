@@ -3,6 +3,10 @@
 A (currently) simple VST3 Synthesizer, written in Rust.
 Mainly created to learn about writing Synthesizers.
 
+### Note:
+The current version suffers from bad performance (because of my bad code design when implementing some features), and a few bugs.  
+Check out the `release` branch for a better performing version (with less features). 
+
 ## Features
 - [x] Sine wave generation
 - [x] Polyphonic midi input
@@ -15,8 +19,8 @@ Mainly created to learn about writing Synthesizers.
 - [x] Other oscillator waves
 - [x] Oscillator parameters
 - [x] Multiple oscillators
-- [ ] Modulation
-  - [ ] Multiple ADSR curves
+- [x] Modulation
+  - [x] Multiple ADSR curves
   - [ ] Modulate "any" parameter
   - [ ] LFOs
 - [ ] Advanced midi input
