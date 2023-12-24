@@ -38,6 +38,7 @@ impl EnvelopeTargets {
         self.targets.remove(index)
     }
 
+    // TODO use?
     pub fn get_amount_for(&self, target: Target) -> f32 {
         self.targets.iter().filter_map(|(t, d)|{
             if *t == target { Some(d) }
@@ -48,8 +49,7 @@ impl EnvelopeTargets {
 
 impl Default for EnvelopeTargets {
     fn default() -> Self {
-        // TODO set to 0 so it takes up more memory, does that make sense?
-        Self::with_target(Target::Oscillator(0))
+        Self::with_target(Target::AllOscillators)
     }
 }
 

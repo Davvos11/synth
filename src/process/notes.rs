@@ -1,10 +1,11 @@
 use std::sync::{Arc, Mutex};
 use nih_plug::prelude::*;
+use nih_plug::util::permit_alloc;
 use crate::utils::fixed_map::FixedMap;
 use crate::{ENVELOPE_AMOUNT, OSCILLATOR_AMOUNT, Synth};
 use crate::params::SynthParams;
 use crate::process::envelope::{Adsr, EnvelopeProperties};
-use crate::process::note::{Note, Oscillator, OscillatorProperties};
+use crate::process::note::{Note, OscillatorProperties};
 use crate::utils::{get_envelope_array, get_oscillator_array};
 
 pub struct NoteStorage {
@@ -12,10 +13,9 @@ pub struct NoteStorage {
     released_notes: Vec<Note>,
 
     oscillator_properties: [Arc<Mutex<OscillatorProperties>>; OSCILLATOR_AMOUNT],
-    envelope_properties: [Arc<Mutex<EnvelopeProperties>>; ENVELOPE_AMOUNT],
+    envelope_properties: Arc<Mutex<[EnvelopeProperties; ENVELOPE_AMOUNT]>>,
 
     oscillator_range: [usize; OSCILLATOR_AMOUNT],
-    envelope_range: [usize; ENVELOPE_AMOUNT],
 }
 
 impl NoteStorage {
@@ -27,9 +27,8 @@ impl NoteStorage {
             notes: FixedMap::new(64),
             released_notes: Vec::with_capacity(64 * OSCILLATOR_AMOUNT),
             oscillator_properties: oscillator_range.map(|_| Arc::new(Mutex::new(OscillatorProperties::default()))),
-            envelope_properties: envelope_range.map(|_| Arc::new(Mutex::new(EnvelopeProperties::default()))),
+            envelope_properties: Arc::new(Mutex::new(envelope_range.map(|_| EnvelopeProperties::default()))),
             oscillator_range,
-            envelope_range,
         }
     }
 
@@ -43,15 +42,9 @@ impl NoteStorage {
                 // Create new waves (for each oscillator) for this note
                 let new_notes =
                     self.oscillator_range.map(|i| {
-                        Note::new(
-                            Oscillator::new(note,
-                                            self.oscillator_properties[i].clone(),
-                                            sample_rate,
-                            ),
-                            // TODO
-                            self.envelope_properties[0].clone(),
-                            velocity,
-                        )
+                        Note::new(note, velocity, sample_rate, i,
+                                  Arc::clone(&self.oscillator_properties[i]),
+                                  Arc::clone(&self.envelope_properties))
                     });
 
                 // Add new notes to map
@@ -83,7 +76,7 @@ impl NoteStorage {
     }
 
     pub fn remove_finished_notes(&mut self) {
-        self.released_notes.retain(|n| !n.finished());
+        self.released_notes.retain(|n| !n.is_finished());
     }
 
     pub fn get_sample_value(&mut self) -> f32 {
@@ -114,15 +107,19 @@ impl NoteStorage {
         }
         for i in 0..ENVELOPE_AMOUNT {
             let env_params = &params.envelope_params[i];
-            *self.envelope_properties[i].lock().unwrap() =
-                EnvelopeProperties::new(
-                    Adsr::new(
-                        env_params.attack.smoothed.next(),
-                        env_params.decay.smoothed.next(),
-                        util::db_to_gain_fast(env_params.sustain.smoothed.next()),
-                        env_params.release.smoothed.next(),
-                    )
-                );
+            permit_alloc(|| {
+                // TODO idk how to fix this
+                self.envelope_properties.lock().unwrap()[i] =
+                    EnvelopeProperties::new(
+                        Adsr::new(
+                            env_params.attack.smoothed.next(),
+                            env_params.decay.smoothed.next(),
+                            util::db_to_gain_fast(env_params.sustain.smoothed.next()),
+                            env_params.release.smoothed.next(),
+                        ),
+                        Arc::clone(&env_params.targets),
+                    );
+            })
         }
     }
 }

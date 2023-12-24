@@ -142,9 +142,7 @@ impl Plugin for Synth {
     }
 }
 
-impl Synth {
-
-}
+impl Synth {}
 
 impl Vst3Plugin for Synth {
     const VST3_CLASS_ID: [u8; 16] = *b"SineMoistestPlug";
