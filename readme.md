@@ -3,6 +3,8 @@
 A (currently) simple VST3 Synthesizer, written in Rust.
 Mainly created to learn about writing Synthesizers.
 
+![Screenshot](https://github.com/Davvos11/synth/assets/20478740/c884fdcb-4e5f-4272-b73c-b4e0b95a6b51)
+
 ### Note:
 The current version suffers from bad performance (because of my bad code design when implementing some features), and a few bugs.  
 Check out the `release` branch for a better performing version (with less features). 
