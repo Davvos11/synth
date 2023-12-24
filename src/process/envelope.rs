@@ -12,16 +12,10 @@ impl EnvelopeProperties {
         Self { adsr, targets }
     }
 
-    // TODO use value instead of bool
-    pub fn has_target(&self, target: Target) -> bool {
+    pub fn get_amount_for(&self, target: Target) -> f32 {
         let targets = self.targets.lock()
-            .expect("Failed to acquire envelope targets lock");
-        for possible_target in &targets.targets {
-            if possible_target.0 == target {
-                return true
-            }
-        }
-        false
+            .expect("Failed to acquire envelope_targets lock");
+        targets.get_amount_for(target)
     }
 }
 

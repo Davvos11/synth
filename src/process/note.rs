@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use enum_iterator::Sequence;
 use nih_plug::prelude::Enum;
 use nih_plug::util;
+use nih_plug::util::permit_alloc;
 use crate::ENVELOPE_AMOUNT;
 use crate::params::envelope_target::Target;
 use crate::process::envelope::{Adsr, EnvelopeProperties, Stage};
@@ -40,14 +41,17 @@ impl Note {
     }
 
     pub fn release(&mut self) {
-        self.stage = Stage::Released {released_at: self.time, gain_before: self.last_env_gain }
+        self.stage = Stage::Released { released_at: self.time, gain_before: self.last_env_gain }
     }
 
     pub fn get_sample(&mut self) -> f32 {
         let sample = self.get_wave_sample();
 
         // Get envelope gain
-        let env_gain = self.get_envelope_gain();
+        let env_gain =
+        permit_alloc(|| {
+             self.get_envelope_gain()
+        });
 
         sample * env_gain * self.velocity
     }
@@ -82,31 +86,32 @@ impl Note {
         sample * osc_properties.volume
     }
 
-    // TODO multiple envelopes
     fn get_envelope_gain(&mut self) -> f32 {
-        if let Some(envelope) = self.get_envelope() {
-            let env_gain = get_env_gain(envelope.adsr, &self.stage, self.time);
-            // Update stage
+        let mut gain = 1.0;
+        let envs = self.get_envelopes();
+        for (adsr, amount) in envs {
+            let env_gain = get_env_gain(adsr, &self.stage, self.time);
+            // Update stage TODO only if all finished
             if env_gain.finished { self.stage = Stage::Finished; }
             self.last_env_gain = env_gain.gain;
-            // Update time
-            self.time += 1.0 / self.sample_rate;
-            env_gain.gain
-        } else {
-            1.0
+            gain *= env_gain.gain / amount
         }
+        // Update time
+        self.time += 1.0 / self.sample_rate;
+        gain
     }
 
-    fn get_envelope(&self) -> Option<EnvelopeProperties> {
+    fn get_envelopes(&self) -> Vec<(Adsr, f32)> {
         let envelope_properties = self.envelope_properties.lock()
-            .expect("Failed to aquire envelope_properties lock");
-        for envelope in envelope_properties.iter() {
-            if envelope.has_target(Target::AllOscillators) ||
-                envelope.has_target(Target::Oscillator(self.oscillator_id)) {
-                return Some(envelope.clone());
+            .expect("Failed to acquire envelope_properties lock");
+        envelope_properties.iter().filter_map(|envelope| {
+            let mut amount = envelope.get_amount_for(Target::AllOscillators);
+            if amount <= 0.0 {
+                amount = envelope.get_amount_for(Target::Oscillator(self.oscillator_id));
+                if amount <= 0.0 { return None; }
             }
-        }
-        None
+            Some((envelope.adsr, amount))
+        }).collect()
     }
 }
 
@@ -136,7 +141,7 @@ fn get_env_gain(adsr: Adsr, stage: &Stage, time: f32) -> Gain {
             } else if time < adsr.attack() + adsr.decay() {
                 // Attack -> sustain phase
                 Gain::new(
-                1.0 - (time - adsr.attack()) / adsr.decay() * (1.0 - adsr.sustain())
+                    1.0 - (time - adsr.attack()) / adsr.decay() * (1.0 - adsr.sustain())
                 )
             } else {
                 Gain::new(adsr.sustain())
@@ -145,8 +150,8 @@ fn get_env_gain(adsr: Adsr, stage: &Stage, time: f32) -> Gain {
         Stage::Released { released_at, gain_before: volume_before } => {
             if time <= released_at + adsr.release() {
                 Gain::new(
-                volume_before - (time - released_at) /
-                    (adsr.release() / volume_before)
+                    volume_before - (time - released_at) /
+                        (adsr.release() / volume_before)
                 )
             } else {
                 Gain::finished()
@@ -160,7 +165,7 @@ fn get_env_gain(adsr: Adsr, stage: &Stage, time: f32) -> Gain {
 
 struct Gain {
     gain: f32,
-    finished: bool
+    finished: bool,
 }
 
 impl Gain {

@@ -49,7 +49,7 @@ impl EnvelopeTargets {
 
 impl Default for EnvelopeTargets {
     fn default() -> Self {
-        Self::with_target(Target::AllOscillators)
+        Self::with_target(Target::None)
     }
 }
 
