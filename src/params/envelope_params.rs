@@ -5,16 +5,16 @@ use crate::params::envelope_target::{EnvelopeTargets, Target};
 
 #[derive(Params)]
 pub struct EnvelopeParams {
-    #[id = "enabled"]
+    #[id = "on"]
     pub enabled: BoolParam,
 
-    #[id = "attack"]
+    #[id = "a"]
     pub attack: FloatParam,
-    #[id = "decay"]
+    #[id = "d"]
     pub decay: FloatParam,
-    #[id = "sustain"]
+    #[id = "s"]
     pub sustain: FloatParam,
-    #[id = "release"]
+    #[id = "r"]
     pub release: FloatParam,
 
     // TODO test if this properly persists in a plugin host

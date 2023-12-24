@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::OSCILLATOR_AMOUNT;
 use crate::gui::events::ControlEvent;
 
-#[derive(Serialize, Deserialize, Lens)]
+#[derive(Serialize, Deserialize, Lens, Clone)]
 pub struct EnvelopeTargets {
+    // TODO use hashmap
     pub targets: Vec<(Target, f32)>,
 }
 
@@ -36,11 +37,19 @@ impl EnvelopeTargets {
     pub fn remove(&mut self, index: usize) -> (Target, f32) {
         self.targets.remove(index)
     }
+
+    pub fn get_amount_for(&self, target: Target) -> f32 {
+        self.targets.iter().filter_map(|(t, d)|{
+            if *t == target { Some(d) }
+            else { None }
+        }).sum()
+    }
 }
 
 impl Default for EnvelopeTargets {
     fn default() -> Self {
-        Self::with_target(Target::None)
+        // TODO set to 0 so it takes up more memory, does that make sense?
+        Self::with_target(Target::Oscillator(0))
     }
 }
 

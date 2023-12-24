@@ -4,22 +4,22 @@ use crate::process::note::WaveKind;
 
 #[derive(Params)]
 pub struct OscillatorParams {
-    #[id = "wave_kind"]
+    #[id = "wave"]
     pub wave_kind: EnumParam<WaveKind>,
 
     #[id = "pwm"]
     pub pulse_width: FloatParam,
 
-    #[id = "enabled"]
+    #[id = "on"]
     pub enabled: BoolParam,
 
-    #[id = "volume"]
+    #[id = "vol"]
     pub volume: FloatParam,
 
-    #[id = "transpose"]
+    #[id = "tran"]
     pub transpose: IntParam,
 
-    #[id = "detune"]
+    #[id = "det"]
     pub detune: FloatParam,
 }
 
